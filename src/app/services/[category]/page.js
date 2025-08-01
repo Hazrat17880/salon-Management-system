@@ -5,6 +5,7 @@ import React from 'react';
 import Image from 'next/image';
 import { FiScissors, FiDroplet, FiFeather, FiWind, FiClock, FiStar, FiAward } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import { Link } from 'lucide-react';
 
 const servicesData = {
   hair: {
@@ -106,14 +107,14 @@ export default function ServiceCategoryPage() {
         <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md mx-4">
           <h1 className="text-3xl font-bold text-rose-500 mb-4">404</h1>
           <p className="text-lg text-gray-600 mb-6">
-            The service category you're looking for doesn't exist.
+            The service category youre looking for does not exist.
           </p>
-          <a
+          <Link
             href="/services"
             className="inline-block px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md"
           >
             Browse Our Services
-          </a>
+          </Link>
         </div>
       </motion.div>
     );
@@ -311,7 +312,7 @@ export default function ServiceCategoryPage() {
               Client Experiences
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Don't just take our word for it. Here's what our clients say about their experiences.
+              Do not just take our word for it. Here is what our clients say about their experiences.
             </p>
           </motion.div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -356,7 +357,7 @@ export default function ServiceCategoryPage() {
                     </svg>
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6 leading-relaxed">"{testimonial.quote}"</p>
+                <p className="text-gray-700 mb-6 leading-relaxed">{testimonial.quote}</p>
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold mr-3">
                     {testimonial.author.charAt(0)}
@@ -388,18 +389,18 @@ export default function ServiceCategoryPage() {
               Join our community of satisfied clients who trust us with their beauty and wellness needs.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <a
+              <Link
                 href="/booking"
                 className="px-8 py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium shadow-lg transition-all duration-300 hover:shadow-xl"
               >
                 Book Your Appointment
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/services"
                 className="px-8 py-4 bg-transparent border-2 border-white/20 hover:border-rose-400 text-white rounded-lg font-medium transition-all duration-300 hover:shadow-lg"
               >
                 Explore All Services
-              </a>
+              </Link>
             </div>
           </motion.div>
         </div>
