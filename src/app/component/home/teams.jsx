@@ -19,7 +19,7 @@ export default function TeamPreview() {
     { 
       name: 'Mark Lee', 
       role: 'Spa Director', 
-      img: '/usman.jpg',
+      img: '/staff1.jpeg',
       bio: 'Certified massage therapist with expertise in holistic treatments.',
       social: {
         instagram: '#',
@@ -30,7 +30,7 @@ export default function TeamPreview() {
     { 
       name: 'Sofia Brown', 
       role: 'Beauty Specialist', 
-      img: '/usman.jpg',
+      img: '/staff2.jpeg',
       bio: 'Makeup artist and skincare expert trained in Paris and Milan.',
       social: {
         instagram: '#',
@@ -41,7 +41,7 @@ export default function TeamPreview() {
     { 
       name: 'David Chen', 
       role: 'Barber', 
-      img: '/usman.jpg',
+      img: '/staff3.jpeg',
       bio: 'Traditional and modern barbering techniques for the perfect cut.',
       social: {
         instagram: '#',

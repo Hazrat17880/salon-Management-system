@@ -89,9 +89,9 @@ export default function ServicesSection() {
         </div>
 
         <div className="text-center mt-16">
-          <Link href="/features">
+          <Link href="/signin">
             <button className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-pink-600 hover:bg-pink-700 transition">
-              Try Free for 14 Days
+              Try it For Free
             </button>
           </Link>
         </div>

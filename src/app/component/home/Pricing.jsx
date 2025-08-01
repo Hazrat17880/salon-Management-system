@@ -9,8 +9,8 @@ const pricingPlans = [
     period: '',
     description: 'Great for getting started with basic features',
     features: [
-      'Up to 2 staff members',
-      '50 appointments/month',
+      'Up to 10 staff members',
+      '50 appointments/per day',
       'Essential features',
       'Community support',
     ],
@@ -23,8 +23,8 @@ const pricingPlans = [
     period: 'per month',
     description: 'Perfect for individual stylists or small salons',
     features: [
-      'Up to 3 staff members',
-      '100 appointments/month',
+      'Up to 30 staff members',
+      '200 appointments/ per day',
       'Basic reporting',
       'Email support',
     ],
@@ -37,7 +37,7 @@ const pricingPlans = [
     period: 'per month',
     description: 'Ideal for growing salons with multiple staff',
     features: [
-      'Up to 10 staff members',
+      'Up to 50 staff members',
       'Unlimited appointments',
       'Advanced reporting',
       'Priority support',
@@ -114,7 +114,7 @@ export default function PricingSection() {
                 </ul>
                 <Link 
                   href={plan.name === 'Enterprise' ? '/contact' : '/signup'}
-                  className={`block w-full text-center py-3 px-4 rounded-lg font-medium ${
+                  className={`block w-full text-center py-3 px-4 rounded-lg font-medium hover:bg-gradient-to-r from-pink-600 to-fuchsia-600 hover:text-white ${
                     plan.popular
                       ? 'bg-pink-600 text-white hover:bg-pink-700'
                       : 'bg-gray-100 text-gray-800 hover:bg-gray-200'

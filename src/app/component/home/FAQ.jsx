@@ -50,7 +50,7 @@ export default function FAQSection() {
           <section key={index} className="question mb-4 border-b border-gray-200 pb-4">
             {/* question title */}
             <div className="question-title flex justify-between items-center">
-              <p className="text-lg font-medium text-gray-900">{faq.question}</p>
+              <p className="text-lg font-medium text-gray-900 hover:text-pink-500 cursor-pointer">{faq.question}</p>
               <button 
                 type="button" 
                 className="question-btn focus:outline-none"

@@ -29,7 +29,7 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-2 justify-center lg:justify-start">
-            <Link href="/demo">
+            <Link href="/booking">
               <button className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-white font-semibold bg-gradient-to-r from-pink-500 to-fuchsia-600 rounded-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
                 Get Started Free
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -37,7 +37,7 @@ export default function HeroSection() {
                 </svg>
               </button>
             </Link>
-            <Link href="/features">
+            <Link href="/services/hair">
               <button className="inline-flex items-center justify-center gap-2 px-6 py-3.5 text-gray-700 font-medium bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-all duration-300">
                 Explore Features
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

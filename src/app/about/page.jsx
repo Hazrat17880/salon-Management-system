@@ -5,9 +5,14 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 // Animation variants
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.8 } }
+};
+
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
 };
 
 const staggerContainer = {
@@ -15,392 +20,388 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.15
     }
   }
 };
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
+      <nav className="bg-white border-b border-gray-100">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <Link href="/" className="flex items-center">
+              <svg className="w-8 h-8 text-indigo-600 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span className="text-xl font-semibold text-gray-800">SalonPro</span>
+            </Link>
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="/features" className="text-gray-600 hover:text-indigo-600 transition">Features</Link>
+              <Link href="/pricing" className="text-gray-600 hover:text-indigo-600 transition">Pricing</Link>
+              <Link href="/about" className="text-indigo-600 font-medium">About</Link>
+              <Link href="/contact" className="text-gray-600 hover:text-indigo-600 transition">Contact</Link>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link href="/login" className="px-4 py-2 text-gray-600 hover:text-indigo-600 transition">Sign In</Link>
+              <Link href="/register" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                Get Started
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-white py-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-pink-100/30 via-purple-100/20 to-white"></div>
-        <div className="container relative mx-auto px-6">
+      <section className="relative bg-white overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/20 via-white to-white z-0"></div>
+        <div className="container mx-auto px-6 py-24 relative z-10">
           <motion.div 
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="mx-auto max-w-4xl text-center"
+            className="max-w-4xl mx-auto text-center"
           >
+            <motion.div variants={fadeInUp} className="mb-6">
+              <span className="inline-block px-3 py-1 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-full">
+                About SalonPro
+              </span>
+            </motion.div>
             <motion.h1 
               variants={fadeInUp}
               className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl mb-6"
             >
-              <span className="block">Elevate Your Salon Business</span>
-              <span className="block bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                With Intelligent Management
+              <span className="block">Empowering Salon Businesses</span>
+              <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Through Innovation
               </span>
             </motion.h1>
-            
             <motion.p 
               variants={fadeInUp}
-              className="text-xl text-gray-600 mb-10 leading-relaxed"
+              className="text-xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto"
             >
-              Our comprehensive, cloud-based solution empowers your salon to deliver exceptional experiences while optimizing operations.
+              We're revolutionizing salon management with cutting-edge technology designed to streamline operations, enhance client experiences, and drive business growth.
             </motion.p>
-            
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={fadeInUp} className="flex justify-center gap-4">
               <Link
-                href="https://app.salonmanagementapp.com/register"
-                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-pink-600 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:from-pink-700 hover:to-purple-700 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-600"
+                href="/demo"
+                className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3.5 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition"
               >
-                Start Your Free Trial
-                <svg className="ml-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
+                Request Demo
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-6 py-3.5 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition"
+              >
+                Contact Us
               </Link>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Definition Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Mission Section */}
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="text-center max-w-3xl mx-auto"
+            className="max-w-5xl mx-auto"
           >
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-6">
-              Revolutionizing <span className="relative whitespace-nowrap">
-                <span className="relative z-10">Salon Operations</span>
-                <span className="absolute bottom-0 left-0 h-3 w-full bg-pink-200/60 -rotate-1 -z-0"></span>
-              </span>
-            </h2>
-            <p className="text-lg text-gray-600">
-              Our salon management platform integrates all aspects of your business into one powerful, intuitive system designed for growth and efficiency.
-            </p>
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="grid md:grid-cols-2">
+                <div className="p-10 md:p-12 lg:p-16">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="mb-8"
+                  >
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
+                    <div className="w-16 h-1 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+                  </motion.div>
+                  <motion.p 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className="text-lg text-gray-600 mb-8 leading-relaxed"
+                  >
+                    To provide salon owners with intuitive, powerful tools that simplify operations, enhance client relationships, and enable beauty professionals to focus on their craft while growing sustainable businesses.
+                  </motion.p>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4 }}
+                    className="space-y-4"
+                  >
+                    {[
+                      "Simplify salon management workflows",
+                      "Enhance client retention and satisfaction",
+                      "Provide actionable business insights",
+                      "Support sustainable business growth"
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-start">
+                        <div className="flex-shrink-0 mt-1">
+                          <svg className="h-5 w-5 text-indigo-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <p className="ml-3 text-gray-700">{item}</p>
+                      </div>
+                    ))}
+                  </motion.div>
+                </div>
+                <div className="relative min-h-[400px]">
+                  <Image
+                    src="/staff3.jpeg"
+                    alt="Salon team working"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Mission, Vision & Future Section */}
-      <section className="py-20 bg-gradient-to-br from-white to-gray-50">
+      {/* Values Section */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <motion.div 
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="max-w-6xl mx-auto"
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl mx-auto text-center mb-16"
           >
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
-                Our Purpose & Direction
-              </h2>
-              <div className="w-20 h-1 bg-gradient-to-r from-pink-500 to-purple-600 mx-auto"></div>
-            </div>
-
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Mission */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-pink-100 p-3 rounded-lg mr-5 group-hover:bg-pink-200 transition-colors">
-                      <svg className="h-8 w-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900">Our Mission</h3>
-                  </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    To empower salon owners with intuitive technology that simplifies booking, enhances client relationships, and enables beauty professionals to focus on their craft while growing their business.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Vision */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-purple-100 p-3 rounded-lg mr-5 group-hover:bg-purple-200 transition-colors">
-                      <svg className="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900">Our Vision</h3>
-                  </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    To be the most trusted salon management platform, transforming how beauty professionals connect with clients through seamless, technology-driven experiences that drive growth and loyalty.
-                  </p>
-                </div>
-              </motion.div>
-
-              {/* Future Plans */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-indigo-100 p-3 rounded-lg mr-5 group-hover:bg-indigo-200 transition-colors">
-                      <svg className="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900">Our Roadmap</h3>
-                  </div>
-                  <ul className="space-y-3 text-gray-700">
-                    {[
-                      "AI-powered booking recommendations",
-                      "Integrated loyalty programs",
-                      "Advanced staff analytics",
-                      "Multi-location support"
-                    ].map((item, index) => (
-                      <li key={index} className="flex items-start">
-                        <svg className="h-5 w-5 text-pink-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </motion.div>
-            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Core Values</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              The principles that guide everything we do at SalonPro
+            </p>
           </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {[
+              {
+                title: "Innovation",
+                description: "We constantly push boundaries to deliver cutting-edge solutions for the beauty industry.",
+                icon: (
+                  <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                )
+              },
+              {
+                title: "Integrity",
+                description: "We build trust through transparency, honesty, and ethical business practices.",
+                icon: (
+                  <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                )
+              },
+              {
+                title: "Empathy",
+                description: "We understand the challenges salon owners face and design solutions that truly help.",
+                icon: (
+                  <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                )
+              }
+            ].map((value, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow"
+              >
+                <div className="bg-indigo-50 p-3 rounded-full w-16 h-16 flex items-center justify-center mb-6">
+                  {value.icon}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h3>
+                <p className="text-gray-600">{value.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Value Proposition Sections */}
-      <div className="space-y-32 py-24">
-        {/* Section 1 - Business Control */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-          className="container mx-auto px-6"
-        >
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <motion.div variants={fadeInUp} className="lg:w-1/2 space-y-6">
-              <h3 className="text-2xl font-bold text-gray-900">
-                Complete Business Oversight
-              </h3>
-              <p className="text-gray-700 leading-relaxed">
-                Gain unprecedented control with our salon management platform that provides:
-              </p>
-              <ul className="space-y-3">
-                {[
-                  "Real-time booking dashboard",
-                  "Automated client reminders",
-                  "Staff performance tracking",
-                  "Revenue analytics"
-                ].map((item, index) => (
-                  <li key={index} className="flex items-start">
-                    <div className="bg-pink-100 p-1 rounded-full mr-3">
-                      <svg className="h-5 w-5 text-pink-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-700">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-            <motion.div
-              variants={fadeInUp}
-              className="lg:w-1/2 relative rounded-xl overflow-hidden shadow-2xl"
-            >
-              <Image
-                src="/fe1.webp"
-                alt="Salon management dashboard"
-                width={600}
-                height={400}
-                className="w-full h-auto"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-            </motion.div>
-          </div>
-        </motion.section>
+      {/* Team Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="max-w-4xl mx-auto text-center mb-16"
+          >
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Meet Our Leadership</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              The passionate team driving SalonPro's vision forward
+            </p>
+          </motion.div>
 
-        {/* Section 2 - Client Experience */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-          className="container mx-auto px-6"
-        >
-          <div className="flex flex-col lg:flex-row-reverse items-center gap-16">
-            <motion.div variants={fadeInUp} className="lg:w-1/2 space-y-6">
-              <h3 className="text-2xl font-bold text-gray-900">
-                Seamless Client Journey
-              </h3>
-              <p className="text-gray-700 leading-relaxed">
-                From first booking to loyal repeat visits, we optimize every touchpoint:
-              </p>
-              <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 bg-pink-100 p-3 rounded-lg">
-                    <svg className="h-6 w-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="ml-4">
-                    <h4 className="font-semibold text-gray-900">
-                      Website Booking System
-                    </h4>
-                    <p className="mt-1 text-gray-600">
-                      Clients can easily book appointments 24/7 through your salon's website with our integrated booking widget.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-            <motion.div variants={fadeInUp} className="lg:w-1/2 relative">
-              <div className="relative rounded-xl overflow-hidden shadow-2xl">
-                <Image
-                  src="/fe3.webp"
-                  alt="Mobile booking interface"
-                  width={500}
-                  height={600}
-                  className="w-full h-auto"
-                />
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
-
-        {/* Section 3 - Client Management */}
-        <section className="container mx-auto px-6">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="lg:w-1/2 relative">
-              <div className="relative">
-                <Image
-                  src="/fe2.webp"
-                  alt="Client management interface"
-                  width={300}
-                  height={600}
-                  className="rounded-lg shadow-xl z-10 relative"
-                />
-                <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full bg-gradient-to-br from-pink-100 to-purple-100 rounded-lg"></div>
-              </div>
-
-              <div className="mt-8 space-y-4 max-w-md">
-                {[
-                  { name: "Maria Gomez", status: "2 upcoming appointments" },
-                  { name: "David Fil", status: "Preferred stylist: Sarah" },
-                  { name: "Sue Groves", status: "Last service: Hair Color" }
-                ].map((client, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow border-l-4 border-pink-500"
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-semibold text-gray-900">
-                          {client.name}
-                        </h4>
-                        <p className="text-sm text-gray-500">{client.status}</p>
-                      </div>
-                      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <div className="lg:w-1/2 space-y-8">
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {[
+              {
+                name: "Sarah Johnson",
+                role: "CEO & Founder",
+                bio: "Former salon owner with 15+ years experience in the beauty industry.",
+                image: "/staff2.jpeg"
+              },
+              {
+                name: "Michael Chen",
+                role: "CTO",
+                bio: "Technology expert specializing in SaaS solutions for small businesses.",
+                image: "/staff1.jpeg"
+              },
+              {
+                name: "David Wilson",
+                role: "Head of Customer Success",
+                bio: "Dedicated to ensuring our customers get the most from our platform.",
+                image: "/staff3.jpeg"
+              }
+            ].map((member, index) => (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                key={index}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-xl overflow-hidden shadow-lg"
               >
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  Client Relationship Management
-                </h3>
-                <p className="text-gray-700 mb-6 leading-relaxed">
-                  Build lasting relationships with tools designed to understand and serve your clients better:
-                </p>
-                <ul className="space-y-3">
-                  {[
-                    "Visit history tracking",
-                    "Service preferences",
-                    "Automated follow-ups",
-                    "Loyalty program integration"
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-start">
-                      <div className="bg-pink-100 p-1 rounded-full mr-3">
-                        <svg className="h-5 w-5 text-pink-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <span className="text-gray-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="relative h-64">
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900">{member.name}</h3>
+                  <p className="text-indigo-600 mb-3">{member.role}</p>
+                  <p className="text-gray-600">{member.bio}</p>
+                </div>
               </motion.div>
-            </div>
+            ))}
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-pink-600 to-purple-600 py-20">
+      <section className="py-20 bg-gradient-to-r from-indigo-600 to-purple-600">
         <div className="container mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8 }}
             className="max-w-3xl mx-auto"
           >
-            <h2 className="text-3xl font-bold text-white mb-6">Ready to Transform Your Salon?</h2>
-            <p className="text-xl text-pink-100 mb-8">
-              Join thousands of salons using our platform to streamline operations and grow their business.
+            <h2 className="text-3xl font-bold text-white mb-6">Ready to Transform Your Salon Business?</h2>
+            <p className="text-xl text-indigo-100 mb-8">
+              Join thousands of salons using our platform to streamline operations and enhance client experiences.
             </p>
-            <Link
-              href="https://app.salonmanagementapp.com/register"
-              className="inline-flex items-center justify-center rounded-lg bg-white px-8 py-4 text-lg font-semibold text-pink-600 shadow-lg transition-all hover:bg-gray-100 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              Start Free Trial
-              <svg className="ml-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </Link>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Link
+                href="/demo"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3.5 text-base font-medium text-indigo-600 shadow-sm hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition"
+              >
+                Request Demo
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-lg border border-white px-6 py-3.5 text-base font-medium text-white shadow-sm hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition"
+              >
+                Contact Sales
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
-    </main>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white pt-16 pb-8">
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-12">
+            <div>
+              <div className="flex items-center mb-6">
+                <svg className="w-8 h-8 text-indigo-400 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-xl font-semibold">SalonPro</span>
+              </div>
+              <p className="text-gray-400 mb-6">
+                The complete salon management solution for modern beauty businesses.
+              </p>
+              <div className="flex space-x-4">
+                {['twitter', 'facebook', 'instagram', 'linkedin'].map((social) => (
+                  <a key={social} href="#" className="text-gray-400 hover:text-white transition">
+                    <span className="sr-only">{social}</span>
+                    <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d={`M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z`} />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-6">Product</h3>
+              <ul className="space-y-3">
+                {['Features', 'Pricing', 'Integrations', 'Updates'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-gray-400 hover:text-white transition">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-6">Resources</h3>
+              <ul className="space-y-3">
+                {['Blog', 'Guides', 'Webinars', 'Help Center'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-gray-400 hover:text-white transition">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-300 tracking-wider uppercase mb-6">Company</h3>
+              <ul className="space-y-3">
+                {['About', 'Careers', 'Contact', 'Partners'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-gray-400 hover:text-white transition">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm">
+              &copy; {new Date().getFullYear()} SalonPro. All rights reserved.
+            </p>
+            <div className="mt-4 md:mt-0 flex space-x-6">
+              <a href="#" className="text-gray-400 hover:text-white text-sm transition">Privacy Policy</a>
+              <a href="#" className="text-gray-400 hover:text-white text-sm transition">Terms of Service</a>
+              <a href="#" className="text-gray-400 hover:text-white text-sm transition">Cookie Policy</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }
