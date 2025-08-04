@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
   const hideLayoutPaths = [
     "/dashboard",
     "/dashboard/",
-    "/admin",
+    "/salon/staff/dashboard",
     "/admin/",
     "/staff",
     "/staff/"
