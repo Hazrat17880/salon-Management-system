@@ -1,27 +1,56 @@
 "use client";
 import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function ForgotPassword() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  // Get role from URL params (default to client)
+  const userType = searchParams.get("role") || "client";
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log({ email });
-      setIsLoading(false);
+    setError(null);
+
+    try {
+      // API endpoint based on user type
+      const endpoint = userType === "salon" 
+        ? "/api/auth/salon/forgot-password" 
+        : "/api/auth/client/forgot-password";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send reset link");
+      }
+
       setEmailSent(true);
-    }, 1500);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4 relative overflow-hidden pt-16">
-      {/* Animated background elements */}
+      {/* Background animations */}
       <motion.div 
         className="absolute h-[600px] w-[600px] bg-gradient-to-br from-purple-400/20 to-blue-400/20 rounded-full blur-3xl"
         animate={{
@@ -70,24 +99,32 @@ export default function ForgotPassword() {
             </div>
           </motion.div>
           <h2 className="text-3xl font-bold text-gray-800 mb-1">
-            {emailSent ? "Check Your Email" : "Forgot Password"}
+            {emailSent ? "Check Your Email" : `Reset ${userType === "salon" ? "Salon" : "Client"} Password`}
           </h2>
           <p className="text-gray-500">
             {emailSent 
-              ? "We've sent a password reset link to your email" 
-              : "Enter your email to reset your password"}
+              ? `We've sent a password reset link to your ${userType} account email` 
+              : `Enter your ${userType} account email to reset password`}
           </p>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
         {!emailSent ? (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {userType === "salon" ? "Salon Email" : "Client Email"}
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder={userType === "salon" ? "salon@example.com" : "client@example.com"}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
@@ -108,18 +145,23 @@ export default function ForgotPassword() {
                   Sending...
                 </div>
               ) : (
-                'Reset Password'
+                `Reset ${userType === "salon" ? "Salon" : "Client"} Password`
               )}
             </motion.button>
           </form>
         ) : (
           <div className="text-center">
             <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-lg">
-              <p>We've sent a password reset link to <span className="font-medium">{email}</span></p>
+              <p>We've sent a {userType} password reset link to:</p>
+              <p className="font-medium mt-1">{email}</p>
             </div>
             <p className="text-sm text-gray-500 mb-6">
-              Didn't receive the email? Check your spam folder or <button 
-                onClick={() => setEmailSent(false)}
+              Didn't receive the email? Check your spam folder or{" "}
+              <button
+                onClick={() => {
+                  setEmailSent(false);
+                  setError(null);
+                }}
                 className="text-indigo-600 hover:underline"
               >
                 try again
@@ -129,8 +171,11 @@ export default function ForgotPassword() {
         )}
 
         <div className="mt-8 text-center text-sm text-gray-500">
-          <Link href="/signin" className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline">
-            Back to Sign in
+          <Link 
+            href={`/signin`} 
+            className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+          >
+            Back to  Sign in
           </Link>
         </div>
       </motion.div>

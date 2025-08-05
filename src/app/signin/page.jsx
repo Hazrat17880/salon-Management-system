@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
-import { FaApple, FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -11,15 +12,51 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userType, setUserType] = useState("client"); // 'client' or 'salon'
+  const [error, setError] = useState(null);
 
-  const handleLogin = (e) => {
+  const router = useRouter();
+
+  const handleForgotPassword = () => {
+    router.push(`/forgot?role=${userType}`);
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log({ email, password, rememberMe });
+    setError(null);
+
+    try {
+      // API endpoint based on user type
+      const endpoint = userType === "salon" 
+        ? "/api/auth/salon/login" 
+        : "/api/auth/client/login";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, rememberMe }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // Redirect based on user type
+      if (userType === "salon") {
+        router.push("/salon/dashboard");
+      } else {
+        router.push("/");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -73,12 +110,48 @@ export default function LoginPage() {
             </div>
           </motion.div>
           <h2 className="text-3xl font-bold text-gray-800 mb-1">Welcome Back</h2>
-          <p className="text-gray-500">Sign in to your Salon Customer account</p>
+          <p className="text-gray-500">Sign in to your account</p>
+          
+          {/* User Type Selector */}
+          <div className="flex justify-center mt-4 mb-6">
+            <div className="inline-flex bg-gray-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setUserType("client")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  userType === "client" 
+                    ? "bg-white shadow-sm text-indigo-600" 
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                I'm a Client
+              </button>
+              <button
+                type="button"
+                onClick={() => setUserType("salon")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  userType === "salon" 
+                    ? "bg-white shadow-sm text-indigo-600" 
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                Salon Owner
+              </button>
+            </div>
+          </div>
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
             <div className="relative">
               <input
                 type="email"
@@ -92,7 +165,9 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -123,9 +198,12 @@ export default function LoginPage() {
                   Remember me
                 </label>
               </div>
-              <a href="/forgot" className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline">
+              <button 
+                onClick={handleForgotPassword}
+                className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
           </div>
 
@@ -141,46 +219,56 @@ export default function LoginPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Signing in...
+                Signing in as {userType === "client" ? "Client" : "Salon"}
               </div>
             ) : (
-              'Sign In'
+              `Sign In as ${userType === "client" ? "Client" : "Salon"}`
             )}
           </motion.button>
         </form>
 
-        <div className="my-6 relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or continue with</span>
-          </div>
-        </div>
+        {/* Only show social login options for clients */}
+        {userType === "client" && (
+          <>
+            <div className="my-6 relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <motion.button
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-          >
-            <FcGoogle className="text-xl" />
-            <span className="text-sm font-medium">Google</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-          >
-            <FaFacebook className="text-xl" />
-            <span className="text-sm font-medium">Facebook</span>
-          </motion.button>
-        </div>
+            <div className="grid grid-cols-2 gap-3">
+              <motion.button
+                type="button"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              >
+                <FcGoogle className="text-xl" />
+                <span className="text-sm font-medium">Google</span>
+              </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+              >
+                <FaFacebook className="text-xl text-blue-600" />
+                <span className="text-sm font-medium">Facebook</span>
+              </motion.button>
+            </div>
+          </>
+        )}
 
         <div className="mt-8 text-center text-sm text-gray-500">
           Don't have an account?{' '}
-          <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline">
-            Get started
+          <Link 
+            href={userType === "client" ? "/signup" : "/salon/signup"} 
+            className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+          >
+            Sign up as {userType === "client" ? "Client" : "Salon"}
           </Link>
         </div>
       </motion.div>
