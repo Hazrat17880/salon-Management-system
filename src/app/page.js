@@ -12,12 +12,15 @@ import Testimonials from "./component/home/testiminial";
 import StatsSection from "./component/home/StatSection";
 import PricingSection from "./component/home/Pricing";
 import FAQSection from "./component/home/FAQ";
+import SalonBookingSystem from "./component/home/SalonSection";
+import SalonList from "./component/home/SalonSection";
 
 const HomePage = () => {
   return (
     <div className="bg-white">
      
       <HeroSection />
+      <SalonList/>
       <StatsSection />
       <PricingSection />
       <FAQSection />
