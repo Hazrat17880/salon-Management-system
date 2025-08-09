@@ -437,9 +437,9 @@ const SalonManagement = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button disabled className="px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition whitespace-nowrap">
+          {/* <button disabled className="px-4 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition whitespace-nowrap">
             Add New Salon
-          </button>
+          </button> */}
         </div>
       </div>
       

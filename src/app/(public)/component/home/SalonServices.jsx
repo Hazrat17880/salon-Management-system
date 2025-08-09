@@ -86,6 +86,47 @@ const services = [
     image: '/salon2.jpg', // Using user-provided image path
     rating: 4.8,
   },
+  // Adding more services to demonstrate the "Show More" functionality
+  {
+    id: 's9',
+    name: 'Deep Tissue Massage',
+    description: 'Targeted massage for chronic muscle tension and pain relief.',
+    price: 95,
+    gender: 'unisex',
+    category: 'Massage',
+    image: '/salon1.jpg',
+    rating: 4.7,
+  },
+  {
+    id: 's10',
+    name: 'Brazilian Blowout',
+    description: 'Smoothing treatment for frizzy hair that lasts up to 12 weeks.',
+    price: 200,
+    gender: 'female',
+    category: 'Hair Treatment',
+    image: '/salon2.jpg',
+    rating: 4.8,
+  },
+  {
+    id: 's11',
+    name: 'Men\'s Hair Color',
+    description: 'Professional coloring to cover grays or add dimension.',
+    price: 65,
+    gender: 'male',
+    category: 'Hair Coloring',
+    image: '/salon3.jpg',
+    rating: 4.6,
+  },
+  {
+    id: 's12',
+    name: 'Pedicure Deluxe',
+    description: 'Luxurious foot treatment with exfoliation and massage.',
+    price: 60,
+    gender: 'unisex',
+    category: 'Pedicure',
+    image: '/salon1.jpg',
+    rating: 4.9,
+  },
 ];
 
 // Dynamically generate unique categories and price ranges from the data.
@@ -136,6 +177,7 @@ const SalonServices = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedPriceRange, setSelectedPriceRange] = useState(priceRanges[0]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [visibleServicesCount, setVisibleServicesCount] = useState(6); // Initial number of services to show
 
   // Filtering logic
   const filteredServices = services.filter((service) => {
@@ -152,10 +194,23 @@ const SalonServices = () => {
     return genderMatch && categoryMatch && priceMatch;
   });
 
+  // Function to show more services
+  const showMoreServices = () => {
+    setVisibleServicesCount(prevCount => prevCount + 6); // Increase by 6 each click
+  };
+
+  // Function to reset visible services count when filters change
+  const resetVisibleServices = () => {
+    setVisibleServicesCount(6);
+  };
+
   // A helper function to create a button with dynamic styling
   const FilterButton = ({ onClick, label, active }) => (
     <button
-      onClick={onClick}
+      onClick={() => {
+        onClick();
+        resetVisibleServices(); // Reset visible count when filters change
+      }}
       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ease-in-out ${
         active
           ? 'bg-pink-500 text-white shadow-md'
@@ -268,7 +323,7 @@ const SalonServices = () => {
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredServices.map((service) => (
+          {filteredServices.slice(0, visibleServicesCount).map((service) => (
             <Link href={`/services/${service.id}`} key={service.id} className="group">
               <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
                 <div className="relative overflow-hidden h-52">
@@ -308,6 +363,18 @@ const SalonServices = () => {
             </Link>
           ))}
         </div>
+
+        {/* Show More Button - Only visible if there are more services to show */}
+        {filteredServices.length > visibleServicesCount && (
+          <div className="text-center mt-10">
+            <button
+              onClick={showMoreServices}
+              className="px-8 py-3 bg-pink-500 text-white font-semibold rounded-full shadow-lg hover:bg-pink-600 hover:shadow-xl transition-all duration-300"
+            >
+              Show More Services
+            </button>
+          </div>
+        )}
 
         {/* No results message */}
         {filteredServices.length === 0 && (

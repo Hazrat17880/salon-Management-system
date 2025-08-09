@@ -31,6 +31,60 @@ const salons = [
     services: ['Hair Cutting', 'Facial'],
     rating: 4.2,
   },
+  {
+    id: 4,
+    name: 'Luxury Spa & Salon',
+    image: '/salon1.jpg',
+    location: 'DHA Phase 5',
+    gender: 'female',
+    services: ['Hair Cutting', 'Facial', 'Manicure', 'Pedicure'],
+    rating: 4.9,
+  },
+  {
+    id: 5,
+    name: 'Gentlemen\'s Grooming',
+    image: '/salon2.jpg',
+    location: 'Bahria Town',
+    gender: 'male',
+    services: ['Hair Cutting', 'Beard Trim', 'Hot Towel Shave'],
+    rating: 4.7,
+  },
+  {
+    id: 6,
+    name: 'Urban Style Lounge',
+    image: '/salon3.jpg',
+    location: 'Faisal Town',
+    gender: 'unisex',
+    services: ['Hair Cutting', 'Hair Coloring', 'Keratin Treatment'],
+    rating: 4.4,
+  },
+  {
+    id: 7,
+    name: 'The Beauty Parlor',
+    image: '/salon1.jpg',
+    location: 'Johar Town',
+    gender: 'female',
+    services: ['Bridal Makeup', 'Hair Styling', 'Mehndi'],
+    rating: 4.6,
+  },
+  {
+    id: 8,
+    name: 'Executive Cuts',
+    image: '/salon2.jpg',
+    location: 'Garden Town',
+    gender: 'male',
+    services: ['Hair Cutting', 'Facial', 'Head Massage'],
+    rating: 4.3,
+  },
+  {
+    id: 9,
+    name: 'Hair Masters',
+    image: '/salon3.jpg',
+    location: 'Wapda Town',
+    gender: 'unisex',
+    services: ['Hair Cutting', 'Hair Treatments', 'Extensions'],
+    rating: 4.5,
+  },
 ];
 
 const uniqueServices = Array.from(
@@ -40,6 +94,7 @@ const uniqueServices = Array.from(
 const SalonList = () => {
   const [selectedGender, setSelectedGender] = useState('');
   const [selectedService, setSelectedService] = useState('');
+  const [visibleCount, setVisibleCount] = useState(6); // Initial number of salons to show
 
   const filteredSalons = salons.filter((salon) => {
     const genderMatch =
@@ -51,6 +106,16 @@ const SalonList = () => {
 
     return genderMatch && serviceMatch;
   });
+
+  // Function to show more salons
+  const showMoreSalons = () => {
+    setVisibleCount(prevCount => prevCount + 3); // Increase by 3 each click
+  };
+
+  // Reset visible count when filters change
+  const resetVisibleCount = () => {
+    setVisibleCount(6);
+  };
 
   return (
     <section className="py-12 px-4 max-w-7xl mx-auto">
@@ -67,7 +132,10 @@ const SalonList = () => {
           <div className="relative">
             <select
               value={selectedGender}
-              onChange={(e) => setSelectedGender(e.target.value)}
+              onChange={(e) => {
+                setSelectedGender(e.target.value);
+                resetVisibleCount();
+              }}
               className="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="">All Genders</option>
@@ -86,7 +154,10 @@ const SalonList = () => {
           <div className="relative">
             <select
               value={selectedService}
-              onChange={(e) => setSelectedService(e.target.value)}
+              onChange={(e) => {
+                setSelectedService(e.target.value);
+                resetVisibleCount();
+              }}
               className="block appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             >
               <option value="">All Services</option>
@@ -107,7 +178,7 @@ const SalonList = () => {
 
       {/* Salon Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSalons.map((salon) => (
+        {filteredSalons.slice(0, visibleCount).map((salon) => (
           <Link href={`/salons/${salon.id}`} key={salon.id} className="group">
             <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
               <div className="relative overflow-hidden h-48">
@@ -153,6 +224,25 @@ const SalonList = () => {
         ))}
       </div>
 
+      {/* Show More Button - Only visible if there are more salons to show */}
+     {filteredSalons.length > visibleCount && (
+  <div className="mt-12 flex justify-center">
+    <button
+      onClick={showMoreSalons}
+      className="flex items-center px-6 py-3 bg-white border border-indigo-100 text-indigo-600 font-medium rounded-full shadow-sm hover:shadow-md hover:bg-indigo-50 transition-all duration-300"
+    >
+      Show More Salons
+      <svg 
+        className="w-4 h-4 ml-2 transition-transform duration-300 hover:translate-x-1" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+      </svg>
+    </button>
+  </div>
+)}
       {filteredSalons.length === 0 && (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
