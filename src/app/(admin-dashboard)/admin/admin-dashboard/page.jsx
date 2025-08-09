@@ -139,7 +139,7 @@ export default function AdminDashboard() {
             { tab: "dashboard", icon: FiBarChart2, label: "Dashboard" },
             { tab: "salons", icon: FiUser, label: "Salon Management" },
             { tab: "customers", icon: FiUsers, label: "Customer Management" },
-            { tab: "staff", icon: FiUser, label: "Staff Management" },
+            // { tab: "staff", icon: FiUser, label: "Staff Management" },
             { tab: "appointments", icon: FiCalendar, label: "Appointments" },
             { tab: "services", icon: FiSettings, label: "Services" },
             { tab: "payments", icon: FiDollarSign, label: "Payments & Earnings" },
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
           {activeTab === "dashboard" && <Overview />}
           {activeTab === "salons" && <SalonManagement />}
           {activeTab === "customers" && <CustomerManagement />}
-          {activeTab === "staff" && <StaffManagement />}
+          {/* {activeTab === "staff" && <StaffManagement />} */}
           {activeTab === "appointments" && <AppointmentManagement />}
           {activeTab === "services" && <ServiceManagement />}
           {activeTab === "payments" && <PaymentsAndEarnings />}
