@@ -4,8 +4,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css"
 
-import Navbar from "./component/common/NavBar";
-import Footer from "./component/common/Footer";
+import Navbar from "../../component/common/NavBar";
+import Footer from "../../component/common/Footer";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 

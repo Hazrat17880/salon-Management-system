@@ -1,5 +1,5 @@
 import React from 'react'
-import SalonList from '../component/home/SalonSection'
+import SalonList from '../../../component/home/SalonSection'
 
 const page = () => {
   return (

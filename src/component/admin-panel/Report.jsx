@@ -1,3 +1,4 @@
+"use client"
 import React from 'react';
 
 // Sample data that should be fetched from an API or passed as props in a real application
