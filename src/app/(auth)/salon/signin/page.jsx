@@ -5,6 +5,8 @@ import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { setAuthToken } from "@/lib/cookiesAction";
+import { toast } from "react-toastify";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,13 +14,12 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState("client"); // 'client' or 'salon'
   const [error, setError] = useState(null);
 
   const router = useRouter();
 
   const handleForgotPassword = () => {
-    router.push(`/forgot?role=${userType}`);
+    router.push(`/forgot?role=salon`);
   };
 
   const handleLogin = async (e) => {
@@ -28,9 +29,8 @@ export default function LoginPage() {
 
     try {
       // API endpoint based on user type
-      const endpoint = userType === "salon" 
-        ? "/api/auth/salon/login" 
-        : "/api/auth/client/login";
+      const endpoint = "/api/auth/salons/login" 
+       
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -47,11 +47,11 @@ export default function LoginPage() {
       }
 
       // Redirect based on user type
-      if (userType === "salon") {
-        router.push("/salon/dashboard");
-      } else {
-        router.push("/");
-      }
+    
+        toast.success("You are logined successfully.")
+          setAuthToken('salon', 'token') // it is just use only to control the access the login page
+        router.push("/salon-dashboard");
+    
     } catch (err) {
       setError(err.message);
     } finally {
@@ -115,28 +115,25 @@ export default function LoginPage() {
           {/* User Type Selector */}
           <div className="flex justify-center mt-4 mb-6">
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
-              <button
+              <Link href={"/user/signin"}
                 type="button"
-                onClick={() => setUserType("client")}
+               
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  userType === "client" 
-                    ? "bg-white shadow-sm text-indigo-600" 
-                    : "text-gray-600 hover:text-gray-800"
+                 "text-gray-600 hover:text-gray-800"
                 }`}
               >
                 I'm a Client
-              </button>
-              <button
+              </Link>
+              <Link href={"/salon/signin"}
                 type="button"
-                onClick={() => setUserType("salon")}
+               
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  userType === "salon" 
-                    ? "bg-white shadow-sm text-indigo-600" 
-                    : "text-gray-600 hover:text-gray-800"
+                  "bg-white shadow-sm text-indigo-600" 
+                   
                 }`}
               >
                 Salon Owner
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -219,56 +216,22 @@ export default function LoginPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Signing in as {userType === "client" ? "Client" : "Salon"}
+                Signing in as Salon
               </div>
             ) : (
-              `Sign In as ${userType === "client" ? "Client" : "Salon"}`
+              `Sign In as Salon`
             )}
           </motion.button>
         </form>
 
-        {/* Only show social login options for clients */}
-        {userType === "client" && (
-          <>
-            <div className="my-6 relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <motion.button
-                type="button"
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-              >
-                <FcGoogle className="text-xl" />
-                <span className="text-sm font-medium">Google</span>
-              </motion.button>
-              <motion.button
-                type="button"
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-              >
-                <FaFacebook className="text-xl text-blue-600" />
-                <span className="text-sm font-medium">Facebook</span>
-              </motion.button>
-            </div>
-          </>
-        )}
-
+      
         <div className="mt-8 text-center text-sm text-gray-500">
           Don't have an account?{' '}
           <Link 
-            href={userType === "client" ? "/signup" : "/salon/signup"} 
+            href={"/salon/signup"} 
             className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
           >
-            Sign up as {userType === "client" ? "Client" : "Salon"}
+            Sign up as {"Salon"}
           </Link>
         </div>
       </motion.div>

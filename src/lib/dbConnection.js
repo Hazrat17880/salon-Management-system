@@ -26,7 +26,8 @@ export async function query(sql, params) {
 // Initialize the database (create table if not exists)
 (async function initDB() {
   try {
-    // news
+    // ______________________________________AUTHENTICATION TABLES________________________________
+    // use auth table
     await query(`
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS users (
   otp_code VARCHAR(10),
   otp_expires_at DATETIME,
   is_verified BOOLEAN DEFAULT FALSE,
+  active BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -58,10 +60,10 @@ CREATE TABLE IF NOT EXISTS users (
   address VARCHAR(255),
   city VARCHAR(100),
   opening_hours VARCHAR(255),
-  services TEXT, -- maybe JSON or comma-separated list of offered services
   otp_code VARCHAR(10),
   otp_expires_at DATETIME,
   is_verified BOOLEAN DEFAULT FALSE,
+  active BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

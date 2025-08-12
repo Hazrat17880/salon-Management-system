@@ -1,20 +1,14 @@
 import React from 'react';
 import "@/app/globals.css"
+import { ToastContainer } from 'react-toastify';
 const Layout = ({children}) => {
     return (
-  <html lang="en">
-      <head>
-        <title>
-            Login & Signup page
-        </title>
-      </head>
-      <body
-    
-        suppressHydrationWarning={true}
-      >
+
+        <>
+        <ToastContainer theme='colored' position='top-right'/>
         {children}
-      </body>
-    </html>
+        </>
+     
     );
 }
 

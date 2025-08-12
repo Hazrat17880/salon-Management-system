@@ -2,6 +2,7 @@
 import SalonsSideBar from "@/component/common/SalonSideNavBar";
 import SalonsTopBar from "@/component/common/SalonTopNav";
 import "./../globals.css"
+import { ToastContainer } from "react-toastify";
 export default function Layout({ children }) {
   // To sync sidebar open/close between Sidebar and TopBar,
   // you'd normally lift the state up here and pass as props,
@@ -11,6 +12,7 @@ export default function Layout({ children }) {
   return (
     <html>
       <body  suppressHydrationWarning={true}>
+        <ToastContainer/>
         <div className="flex h-screen bg-gray-50 overflow-hidden">
       <SalonsSideBar />
       <div className="flex flex-col flex-1 overflow-auto">
