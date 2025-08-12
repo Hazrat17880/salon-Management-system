@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState } from "react";
+
 import { FiCalendar, FiClock, FiDollarSign, FiEdit2, FiTrash2, FiCheck, FiX } from "react-icons/fi";
 
 const AppointmentsContent = ({ appointments, cancelAppointment, updateAppointment }) => {
