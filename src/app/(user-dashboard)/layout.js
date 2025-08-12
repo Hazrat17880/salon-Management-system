@@ -1,5 +1,6 @@
 "use client";
-import "./../globals.css"
+
+import "./../globals.css";
 import UserSidebar from "@/component/Customer/UserSideBar";
 import UserTopNav from "@/component/Customer/UserTopNav";
 import { useState, useEffect } from "react";
@@ -17,48 +18,59 @@ export default function CustomerLayout({ children }) {
 
   useEffect(() => {
     setMessages([
-      { id: 1, unread: true },
-      { id: 2, unread: false },
+      { id: 1, text: "Your appointment is confirmed", unread: true },
+      { id: 2, text: "Payment received", unread: false },
     ]);
   }, []);
 
-  return (
-    <html>
-      <body>
-          <div className="flex flex-col md:flex-row h-screen bg-gray-50">
-      <UserTopNav
-        activeTab={activeTab}
-        setMobileMenuOpen={setMobileMenuOpen}
-        mobileMenuOpen={mobileMenuOpen}
-        unreadNotifications={unreadNotifications}
-        profileData={profileData}
-      />
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
+  return (
+    <div className="bg-gray-50 h-screen flex flex-col">
+      {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="absolute top-0 left-0 w-full md:static md:block z-50">
-          <UserSidebar
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            unreadNotifications={unreadNotifications}
-            messages={messages}
-          />
-        </div>
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={toggleMobileMenu}
+        />
       )}
 
-      <div className="hidden md:block">
-        <UserSidebar
+      {/* Top Navigation */}
+      <div className="flex-shrink-0">
+        <UserTopNav
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          onMenuToggle={toggleMobileMenu}
+          mobileMenuOpen={mobileMenuOpen}
           unreadNotifications={unreadNotifications}
-          messages={messages}
+          profileData={profileData}
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <main className="p-4 md:p-6">{children}</main>
+      {/* Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <aside
+          className={`fixed md:relative z-50 top-0 left-0 h-full w-64 transform transition-transform duration-300 ease-in-out bg-white shadow-lg md:translate-x-0 ${
+            mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+         <UserSidebar
+  activeTab={activeTab}
+  setActiveTab={setActiveTab}
+  unreadNotifications={unreadNotifications}
+  messages={messages}
+  setMobileMenuOpen={setMobileMenuOpen} // ✅ Add this
+/>
+
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 max-w-7xl mx-auto">
+          {children}
+        </main>
       </div>
     </div>
-      </body>
-    </html>
   );
 }

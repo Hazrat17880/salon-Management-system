@@ -1,5 +1,6 @@
+"use client"
 import NotificationsContent from '@/component/Customer/Notification';
-import React from 'react';
+import React ,{ useState} from 'react';
 
 const Page = () => {
       const markAsRead = (id) => {

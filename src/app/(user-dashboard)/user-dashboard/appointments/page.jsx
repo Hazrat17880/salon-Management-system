@@ -1,5 +1,6 @@
+"use client"
 import AppointmentsContent from '@/component/Customer/AppContent';
-import React from 'react';
+import React,  { useState } from 'react';
 
 const Page = () => {
 
