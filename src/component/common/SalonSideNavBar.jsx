@@ -19,11 +19,11 @@ export default function SalonsSideBar() {
 
   // Define URLs for each tab
   const menuItems = [
-    { id: "dashboard", icon: <RiDashboardFill size={20} />, label: "Dashboard", href: "/salon-staff/" },
-    { id: "appointments", icon: <FiCalendar size={20} />, label: "Appointments", href: "/salon-staff/appointments" },
-    { id: "customers", icon: <FiUsers size={20} />, label: "Customers", href: "/salon-staff/customers" },
-    { id: "services", icon: <FiSettings size={20} />, label: "Services", href: "/salon-staff/services" },
-    { id: "profile", icon: <FiSettings size={20} />, label: "Profile Setting", href: "/salon-staff/profile" },
+    { id: "dashboard", icon: <RiDashboardFill size={20} />, label: "Dashboard", href: "/salon-dashboard/" },
+    { id: "appointments", icon: <FiCalendar size={20} />, label: "Appointments", href: "/salon-dashboard/appointments" },
+    { id: "customers", icon: <FiUsers size={20} />, label: "Customers", href: "/salon-dashboard/customers" },
+    { id: "services", icon: <FiSettings size={20} />, label: "Services", href: "/salon-dashboard/services" },
+    { id: "profile", icon: <FiSettings size={20} />, label: "Profile Setting", href: "/salon-dashboard/profile" },
   ];
 
   function handleTabChange(id, href) {

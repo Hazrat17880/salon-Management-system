@@ -106,7 +106,7 @@ const Navbar = () => {
         </nav>
 
         <div className="hidden lg:flex items-center space-x-4">
-          <button onClick={() => handleRedirect("/signin")} className="flex items-center text-sm font-medium text-gray-700 hover:text-pink-600">
+          <button onClick={() => handleRedirect("/user/signin")} className="flex items-center text-sm font-medium text-gray-700 hover:text-pink-600">
             <User className="h-4 w-4 mr-2" /> Sign In
           </button>
           <button onClick={() => handleRedirect("/booking")} className="flex items-center bg-pink-600 hover:bg-pink-700 text-white px-5 py-2.5 rounded-full text-sm font-medium">
@@ -167,7 +167,7 @@ const Navbar = () => {
             <button onClick={() => handleRedirect("/contact")} className="block w-full text-left text-sm text-gray-700 hover:text-pink-600 py-2">Contact</button>
 
             <div className="pt-2 border-t border-gray-100 mt-2 space-y-3">
-              <button onClick={() => handleRedirect("/signin")} className="flex items-center justify-center w-full text-sm text-gray-700 hover:text-pink-600 py-2">
+              <button onClick={() => handleRedirect("/user/signin")} className="flex items-center justify-center w-full text-sm text-gray-700 hover:text-pink-600 py-2">
                 <User className="h-4 w-4 mr-2" /> Sign In
               </button>
               <button onClick={() => handleRedirect("/booking")} className="block w-full bg-pink-600 hover:bg-pink-700 text-white text-center py-2.5 rounded-lg text-sm font-medium">

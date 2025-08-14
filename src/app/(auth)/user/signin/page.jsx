@@ -117,7 +117,7 @@ export default function UserLoginPage() {
               >
                 I'm a User
               </button>
-              <Link href={"/salon/login"}
+              <Link href={"/salon/signin"}
                 type="button"
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   "text-gray-600 hover:text-gray-800"
