@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { setAuthToken } from "@/lib/cookiesAction";
+import { getAuthToken, setAuthToken } from "@/lib/cookiesAction";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
@@ -58,7 +58,12 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-
+ useEffect(()=>{
+    let token = getAuthToken('salon')
+    if(token){
+      router.push('/salon-dashboard/')
+    }
+  },[])
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4 relative overflow-hidden pt-24">
       {/* Animated background elements */}

@@ -1,10 +1,8 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from 'next/image';
-
-// Import icons for a better UI
 import { 
   FiSearch, 
   FiStar, 
@@ -13,92 +11,91 @@ import {
   FiChevronLeft, 
   FiCheck, 
   FiHeart, 
-  FiUpload, 
   FiCalendar,
-  FiCreditCard,
   FiX
 } from "react-icons/fi";
 
 const SalonsContent = () => {
   // Flow states
-  const [flowStep, setFlowStep] = useState("salons"); // salons -> services -> slots -> payment -> confirmation
+  const [flowStep, setFlowStep] = useState("salons");
   const [selectedSalon, setSelectedSalon] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [favoriteSalons, setFavoriteSalons] = useState([]); // New state for favorite salon IDs
-  
-  // State for the custom alert message
+  const [favoriteSalons, setFavoriteSalons] = useState([]);
+  const [salons, setSalons] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [alertMessage, setAlertMessage] = useState(null);
 
-  // Sample data (updated with images)
-  const salons = [
-    {
-      id: 1,
-      name: "Glamour Studio",
-      rating: 4.8,
-      address: "123 Beauty St, Downtown",
-      services: [
-        { id: 101, name: "Haircut", duration: 30, price: 35 },
-        { id: 102, name: "Hair Coloring", duration: 120, price: 85 },
-        { id: 103, name: "Styling", duration: 45, price: 40 }
-      ],
-      distance: "0.5 miles",
-      image: "/salon1.jpg",
-      slots: {
-        "2023-11-15": ["09:00", "10:30", "14:00", "15:30"],
-        "2023-11-16": ["10:00", "11:30", "13:00", "16:30"],
-        "2023-11-17": ["09:30", "11:00", "14:30", "17:00"]
+  // Fetch salons data
+  useEffect(() => {
+    const fetchSalons = async () => {
+      try {
+        const response = await fetch('/api/user/salons');
+        const data = await response.json();
+        setSalons(data);
+      } catch (error) {
+        console.error('Error fetching salons:', error);
+        setAlertMessage('Failed to load salons');
+      } finally {
+        setIsLoading(false);
       }
-    },
-    {
-      id: 2,
-      name: "Beauty Lounge",
-      rating: 4.5,
-      address: "456 Style Ave, Uptown",
-      services: [
-        { id: 201, name: "Manicure", duration: 45, price: 25 },
-        { id: 202, name: "Pedicure", duration: 60, price: 35 },
-        { id: 203, name: "Waxing", duration: 30, price: 40 }
-      ],
-      distance: "1.2 miles",
-      image: "/salon2.jpg",
-      slots: {
-        "2023-11-15": ["10:00", "12:00", "15:00"],
-        "2023-11-16": ["09:00", "11:00", "14:00"],
-        "2023-11-17": ["10:30", "13:00", "16:00"]
-      }
-    },
-    {
-      id: 3,
-      name: "Chic Cuts",
-      rating: 4.9,
-      address: "789 Hair St, City Center",
-      services: [
-        { id: 301, name: "Haircut", duration: 30, price: 45 },
-        { id: 302, name: "Beard Trim", duration: 20, price: 20 },
-      ],
-      distance: "0.8 miles",
-      image: "/salon3.jpg",
-      slots: {
-        "2023-11-15": ["11:00", "12:30", "14:00", "16:00"],
-        "2023-11-16": ["10:00", "11:00", "15:00", "17:00"],
-        "2023-11-17": ["09:00", "10:00", "13:00"]
-      }
-    }
-  ];
+    };
 
-  // Logic to toggle a salon's favorite status
-  const handleToggleFavorite = (salonId) => {
-    setFavoriteSalons(prevFavorites =>
-      prevFavorites.includes(salonId)
-        ? prevFavorites.filter(id => id !== salonId)
-        : [...prevFavorites, salonId]
-    );
+    const fetchFavorites = async () => {
+      try {
+        const response = await fetch('/api/user/salons/favorite');
+        const data = await response.json();
+        setFavoriteSalons(data?.map(fav => fav.salon_id));
+      } catch (error) {
+        console.error('Error fetching favorites:', error);
+      }
+    };
+
+    fetchSalons();
+    fetchFavorites();
+  }, []);
+
+  // Toggle favorite status
+  const handleToggleFavorite = async (salonId) => {
+    try {
+      const isFavorite = favoriteSalons.includes(salonId);
+      
+      const response = await fetch('/api/user/favorite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ salonId })
+      });
+      
+      if (response.ok) {
+        setFavoriteSalons(prev => 
+          isFavorite 
+            ? prev.filter(id => id !== salonId)
+            : [...prev, salonId]
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      setAlertMessage('Failed to update favorite');
+    }
   };
 
-  const handleSalonSelect = (salon) => {
-    setSelectedSalon(salon);
-    setFlowStep("services");
+  const handleSalonSelect = async (salon) => {
+    try {
+      // Fetch services for this salon
+      const response = await fetch(`/api/user/salons/${salon.id}/services`);
+      const services = await response.json();
+      
+      setSelectedSalon({
+        ...salon,
+        services
+      });
+      setFlowStep("services");
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      setAlertMessage('Failed to load services');
+    }
   };
 
   const handleServiceSelect = (service) => {
@@ -106,32 +103,56 @@ const SalonsContent = () => {
     setFlowStep("slots");
   };
 
-  const handleSlotSelect = (date, time) => {
-    setSelectedSlot({ date, time });
-    setFlowStep("payment");
-  };
+  const handleSlotSelect = async (date, time) => {
+    try {
+      setSelectedSlot({ date, time });
+      
+      // Create appointment
+      const response = await fetch('/api/user/appointment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: selectedSalon.id,
+          services_id: selectedService.id,
+          date,
+          time
+        })
+      });
 
-  const handlePaymentSubmit = () => {
-    setFlowStep("confirmation");
+      if (response.ok) {
+        setFlowStep("confirmation");
+      } else {
+        throw new Error('Failed to create appointment');
+      }
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      setAlertMessage('Failed to book appointment');
+    }
   };
 
   const handleBack = () => {
     if (flowStep === "services") setFlowStep("salons");
     if (flowStep === "slots") setFlowStep("services");
-    if (flowStep === "payment") setFlowStep("slots");
   };
 
   const handleCustomAlert = (message) => {
     setAlertMessage(message);
-    setTimeout(() => {
-      setAlertMessage(null);
-    }, 3000); // Alert disappears after 3 seconds
+    setTimeout(() => setAlertMessage(null), 3000);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 font-sans">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Custom Alert Message */}
         <AnimatePresence>
           {alertMessage && (
             <motion.div
@@ -177,16 +198,6 @@ const SalonsContent = () => {
                 service={selectedService}
                 onSelect={handleSlotSelect}
                 onBack={handleBack}
-              />
-            )}
-
-            {flowStep === "payment" && selectedSalon && selectedService && selectedSlot && (
-              <PaymentStep 
-                salon={selectedSalon}
-                service={selectedService}
-                slot={selectedSlot}
-                onSubmit={handlePaymentSubmit}
-                onBack={handleBack}
                 showAlert={handleCustomAlert}
               />
             )}
@@ -206,17 +217,17 @@ const SalonsContent = () => {
   );
 };
 
-// Salon List Component with Favorites filter
+// Salon List Component
 const SalonList = ({ salons, onSelect, favoriteSalons, onToggleFavorite }) => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredSalons = salons.filter(salon => {
+  const filteredSalons = salons && salons.length>0? salons?.filter(salon => {
     const isFavorite = favoriteSalons.includes(salon.id);
     const matchesSearch = salon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          salon.address.toLowerCase().includes(searchQuery.toLowerCase());
+                         salon.address.toLowerCase().includes(searchQuery.toLowerCase());
     return (!showFavoritesOnly || isFavorite) && matchesSearch;
-  });
+  }):null;
 
   return (
     <div className="space-y-8">
@@ -248,7 +259,7 @@ const SalonList = ({ salons, onSelect, favoriteSalons, onToggleFavorite }) => {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSalons.length > 0 ? filteredSalons.map(salon => (
+        {filteredSalons?.length > 0 ? filteredSalons.map(salon => (
           <motion.div 
             key={salon.id}
             initial={{ opacity: 0, y: 20 }}
@@ -256,7 +267,6 @@ const SalonList = ({ salons, onSelect, favoriteSalons, onToggleFavorite }) => {
             transition={{ duration: 0.3 }}
             className="bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 group relative"
           >
-            {/* Favorite Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -274,11 +284,10 @@ const SalonList = ({ salons, onSelect, favoriteSalons, onToggleFavorite }) => {
               />
             </button>
 
-            {/* Main card content, click to select salon */}
             <div onClick={() => onSelect(salon)} className="cursor-pointer">
               <div className="h-48 bg-gray-200 relative overflow-hidden">
                 <Image
-                  src={salon.image}
+                  src={salon.image || '/salon-default.jpg'}
                   alt={salon.name}
                   layout="fill"
                   objectFit="cover"
@@ -286,7 +295,7 @@ const SalonList = ({ salons, onSelect, favoriteSalons, onToggleFavorite }) => {
                 />
                 <div className="absolute bottom-4 left-4 flex items-center bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-semibold shadow-md">
                   <FiMapPin className="text-indigo-600 mr-1" />
-                  <span>{salon.distance}</span>
+                  <span>{salon.distance || 'Nearby'}</span>
                 </div>
               </div>
               <div className="p-6">
@@ -294,23 +303,10 @@ const SalonList = ({ salons, onSelect, favoriteSalons, onToggleFavorite }) => {
                   <h4 className="font-bold text-xl text-gray-800">{salon.name}</h4>
                   <div className="flex items-center bg-indigo-50 text-indigo-800 px-3 py-1 rounded-full text-sm font-semibold">
                     <FiStar className="mr-1 fill-current text-yellow-400 stroke-yellow-400" />
-                    <span>{salon.rating}</span>
+                    <span>{salon.rating || '4.5'}</span>
                   </div>
                 </div>
                 <p className="text-gray-500 text-sm mb-3">{salon.address}</p>
-                
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {salon.services.slice(0, 3).map((service, i) => (
-                    <span key={i} className="text-xs bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
-                      {service.name}
-                    </span>
-                  ))}
-                  {salon.services.length > 3 && (
-                    <span className="text-xs bg-gray-100 text-gray-800 px-3 py-1 rounded-full">
-                      +{salon.services.length - 3} more
-                    </span>
-                  )}
-                </div>
                 
                 <button className="w-full py-3 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition-colors shadow-md">
                   Book Now
@@ -375,9 +371,35 @@ const ServiceSelection = ({ salon, onSelect, onBack }) => {
 };
 
 // Slot Selection Component
-const SlotSelection = ({ salon, service, onSelect, onBack }) => {
-  const [selectedDate, setSelectedDate] = useState(Object.keys(salon.slots)[0]);
-  
+const SlotSelection = ({ salon, service, onSelect, onBack, showAlert }) => {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState({});
+  const [isLoadingSlots, setIsLoadingSlots] = useState(true);
+
+  // Fetch available slots when component mounts
+  useEffect(() => {
+    const fetchSlots = async () => {
+      try {
+        const response = await fetch(`/api/salons/${salon.id}/slots`);
+        const data = await response.json();
+        setAvailableSlots(data);
+        
+        // Set the first available date as default
+        const dates = Object.keys(data);
+        if (dates.length > 0) {
+          setSelectedDate(dates[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching slots:', error);
+        showAlert('Failed to load available slots');
+      } finally {
+        setIsLoadingSlots(false);
+      }
+    };
+
+    fetchSlots();
+  }, [salon.id, showAlert]);
+
   return (
     <div className="bg-white rounded-3xl shadow-xl overflow-hidden p-8">
       <div className="flex items-center mb-6">
@@ -395,259 +417,46 @@ const SlotSelection = ({ salon, service, onSelect, onBack }) => {
       
       <h2 className="text-xl font-bold text-gray-800 mb-6">Select Date & Time</h2>
       
-      <div className="flex space-x-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-        {Object.keys(salon.slots).map(date => (
-          <button
-            key={date}
-            onClick={() => setSelectedDate(date)}
-            className={`flex-shrink-0 px-5 py-3 rounded-xl font-medium whitespace-nowrap transition-colors duration-200
-              ${selectedDate === date 
-                ? "bg-indigo-600 text-white shadow-md" 
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`
-            }
-          >
-            <FiCalendar className="inline mr-2" />
-            {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </button>
-        ))}
-      </div>
-      
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-        {salon.slots[selectedDate]?.map(time => (
-          <motion.button
-            key={time}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onSelect(selectedDate, time)}
-            className="py-3 px-4 text-sm font-medium border border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-700 transition-all"
-          >
-            {time}
-          </motion.button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Payment Step Component
-const PaymentStep = ({ salon, service, slot, onSubmit, onBack, showAlert }) => {
-  const [receiptFile, setReceiptFile] = useState(null);
-  const [transactionId, setTransactionId] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setReceiptFile(file);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!receiptFile || !transactionId) {
-      showAlert('Please upload your receipt and enter transaction ID');
-      return;
-    }
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onSubmit();
-    }, 1500);
-  };
-
-  return (
-    <div className="bg-white rounded-3xl shadow-xl overflow-hidden p-8">
-      <div className="flex items-center mb-6">
-        <button 
-          onClick={onBack}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors mr-4"
-        >
-          <FiChevronLeft className="h-6 w-6 text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Payment & Confirmation</h1>
-          <p className="text-gray-600 text-sm">Upload your payment receipt to confirm your booking.</p>
+      {isLoadingSlots ? (
+        <div className="flex justify-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
         </div>
-      </div>
-      
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-6">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="font-bold text-xl text-gray-800 mb-4">Payment Details</h3>
-            
-            <div className="space-y-4">
-              {/* Bank Details Section */}
-              <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                <h4 className="text-lg font-medium text-blue-800 mb-3 flex items-center">
-                  <FiCreditCard className="mr-2" /> Bank Transfer
-                </h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Bank Name</p>
-                    <p className="text-gray-800 font-semibold">ABC Bank</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Account Name</p>
-                    <p className="text-gray-800 font-semibold">Salon Services Ltd</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Account Number</p>
-                    <p className="text-gray-800 font-semibold">1234567890</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Branch Code</p>
-                    <p className="text-gray-800 font-semibold">XYZ123</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mobile Money Section */}
-              <div className="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                <h4 className="text-lg font-medium text-purple-800 mb-3 flex items-center">
-                  <FiClock className="mr-2" /> Mobile Money
-                </h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">MTN Mobile Money</p>
-                    <p className="text-gray-800 font-semibold">0244123456</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Vodafone Cash</p>
-                    <p className="text-gray-800 font-semibold">0200123456</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+      ) : (
+        <>
+          <div className="flex space-x-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            {Object.keys(availableSlots).map(date => (
+              <button
+                key={date}
+                onClick={() => setSelectedDate(date)}
+                className={`flex-shrink-0 px-5 py-3 rounded-xl font-medium whitespace-nowrap transition-colors duration-200
+                  ${selectedDate === date 
+                    ? "bg-indigo-600 text-white shadow-md" 
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`
+                }
+              >
+                <FiCalendar className="inline mr-2" />
+                {new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </button>
+            ))}
           </div>
           
-          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Transaction ID
-              </label>
-              <input
-                type="text"
-                value={transactionId}
-                onChange={(e) => setTransactionId(e.target.value)}
-                placeholder="Enter your transaction reference number"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                required
-              />
+          {selectedDate && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+              {availableSlots[selectedDate]?.map(time => (
+                <motion.button
+                  key={time}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onSelect(selectedDate, time)}
+                  className="py-3 px-4 text-sm font-medium border border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-700 transition-all"
+                >
+                  {time}
+                </motion.button>
+              ))}
             </div>
-            
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Payment Receipt
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl">
-                <div className="space-y-1 text-center">
-                  {receiptFile ? (
-                    <div className="flex flex-col items-center">
-                      <FiCheck className="mx-auto h-12 w-12 text-green-500" />
-                      <p className="text-sm text-gray-600 mt-2 font-medium">
-                        {receiptFile.name}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setReceiptFile(null)}
-                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-500 transition-colors"
-                      >
-                        Change file
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex justify-center">
-                        <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                      </div>
-                      <div className="flex text-sm text-gray-600">
-                        <label
-                          htmlFor="file-upload"
-                          className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none"
-                        >
-                          <span>Upload a file</span>
-                          <input
-                            id="file-upload"
-                            name="file-upload"
-                            type="file"
-                            className="sr-only"
-                            onChange={handleFileChange}
-                            accept="image/*,.pdf"
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, PDF up to 5MB
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <button 
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full py-3 bg-indigo-600 text-white rounded-xl font-medium flex items-center justify-center transition-colors shadow-lg
-                ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-indigo-700'}`
-              }
-            >
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <FiCheck className="mr-2" /> Submit Receipt
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-        
-        {/* Appointment Summary Card */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
-          <h3 className="font-bold text-xl text-gray-800 mb-4">Appointment Summary</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Salon</span>
-              <span className="font-semibold text-gray-900">{salon.name}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Service</span>
-              <span className="font-semibold text-gray-900">{service.name}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Date</span>
-              <span className="font-semibold text-gray-900">
-                {new Date(slot.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Time</span>
-              <span className="font-semibold text-gray-900">{slot.time}</span>
-            </div>
-            <div className="border-t border-dashed border-gray-200 my-4"></div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Service Price</span>
-              <span className="font-medium text-gray-800">${service.price}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Tax</span>
-              <span className="font-medium text-gray-800">$2.50</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg">
-              <span className="text-gray-800">Total</span>
-              <span className="text-indigo-600">${(service.price + 2.50).toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
@@ -665,7 +474,7 @@ const ConfirmationStep = ({ salon, service, slot, onComplete }) => {
         <FiCheck className="h-10 w-10 text-green-600" />
       </motion.div>
       <h1 className="text-3xl font-bold text-gray-800 mb-2">Appointment Confirmed!</h1>
-      <p className="text-gray-600 mb-8">Your booking has been successfully placed and is pending verification.</p>
+      <p className="text-gray-600 mb-8">Your booking has been successfully placed.</p>
       
       <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 text-left">
         <h2 className="font-bold text-xl text-gray-800 mb-4">Appointment Details</h2>
@@ -687,16 +496,13 @@ const ConfirmationStep = ({ salon, service, slot, onComplete }) => {
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Total Paid</span>
-            <span className="font-bold text-indigo-600">${(service.price + 2.50).toFixed(2)}</span>
+            <span className="text-gray-600">Total</span>
+            <span className="font-bold text-indigo-600">${service.price}</span>
           </div>
         </div>
       </div>
       
       <div className="flex flex-col sm:flex-row justify-center gap-3">
-        <button className="px-6 py-3 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-100 transition-colors font-medium">
-          Add to Calendar
-        </button>
         <button 
           onClick={onComplete}
           className="px-6 py-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors font-medium shadow-md"

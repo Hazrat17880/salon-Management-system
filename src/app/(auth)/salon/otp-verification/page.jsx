@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FaArrowLeft, FaCheckCircle, FaRegClock } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { setAuthToken } from "@/lib/cookiesAction";
 
 export default function OTPVerification() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -79,9 +80,8 @@ export default function OTPVerification() {
 
       // Verification successful
       setIsVerified(true);
-      
-      
-      // Redirect to login after 3 seconds
+
+        setAuthToken('salon', 'the salon is logined now.')
         toast.success('Your Salon is verified successfully.')
         return router.push("/salon-dashboard");
 

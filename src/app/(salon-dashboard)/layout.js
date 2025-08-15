@@ -10,9 +10,7 @@ export default function Layout({ children }) {
   // So this layout just renders Sidebar + TopBar + children.
 
   return (
-    <html>
-      <body  suppressHydrationWarning={true}>
-        <ToastContainer/>
+  
         <div className="flex h-screen bg-gray-50 overflow-hidden">
       <SalonsSideBar />
       <div className="flex flex-col flex-1 overflow-auto">
@@ -27,7 +25,6 @@ export default function Layout({ children }) {
         </main>
       </div>
     </div>
-      </body>
-    </html>
+   
   );
 }

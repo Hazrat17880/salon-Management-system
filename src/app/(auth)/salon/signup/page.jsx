@@ -1,93 +1,159 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { FaChevronLeft, FaChevronRight, FaCheck, FaBuilding, FaUser, FaLock, FaPhone, FaMapMarkerAlt, FaClock } from "react-icons/fa";
+import { FaChevronLeft, FaChevronRight, FaCheck, FaBuilding, FaUser, FaLock, FaPhone, FaMapMarkerAlt, FaClock, FaIdCard, FaFileAlt } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { getAuthToken } from "@/lib/cookiesAction";
 
 export default function SalonSignupPage() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    salonName: "",
-    ownerName: "",
+    salon_name: "",
+    owner_name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    phone: "",
-    address: "",
+    phone_number: "",
+    street_info: "",
     city: "",
-    openingHours: "09:00-18:00",
+    state: "",
+    country: "United States",
+    postal_code: "",
+    days: "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday",
+    opening_hours: "09:00-18:00",
+    description: "",
+    id_card: null,
+    license: null
   });
   const [isLoading, setIsLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
- const router = useRouter();
+  const router = useRouter();
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setFormData(prev => ({ ...prev, [name]: files[0] }));
+  };
+
+  const validateEmail = (email) => {
+    return /^\S+@\S+\.\S+$/.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    return /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(phone);
+  };
+
   const nextStep = () => {
-    if (validateStep(step)) {
-      setStep(prev => prev + 1);
+    let isValid = true;
+    let errorMessage = "";
+
+    switch (step) {
+      case 1:
+        if (!formData.salon_name || !formData.owner_name || !formData.email) {
+          isValid = false;
+          errorMessage = "Please fill in all required fields";
+        } else if (!validateEmail(formData.email)) {
+          isValid = false;
+          errorMessage = "Please enter a valid email address";
+        }
+        break;
+      case 2:
+        if (!formData.phone_number || !formData.street_info || !formData.city || !formData.state) {
+          isValid = false;
+          errorMessage = "Please fill in all required fields";
+        } else if (!validatePhone(formData.phone_number)) {
+          isValid = false;
+          errorMessage = "Please enter a valid phone number";
+        }
+        break;
+      case 3:
+        if (!formData.password || !formData.confirmPassword) {
+          isValid = false;
+          errorMessage = "Please fill in both password fields";
+        } else if (formData.password.length < 8) {
+          isValid = false;
+          errorMessage = "Password must be at least 8 characters";
+        } else if (formData.password !== formData.confirmPassword) {
+          isValid = false;
+          errorMessage = "Passwords do not match";
+        }
+        break;
+      default:
+        break;
     }
+
+    if (!isValid) {
+      toast.error(errorMessage);
+      return;
+    }
+
+    setStep(prev => prev + 1);
   };
 
   const prevStep = () => {
     setStep(prev => prev - 1);
   };
 
-  const validateStep = (currentStep) => {
-    switch (currentStep) {
-      case 1:
-        return formData.salonName && formData.ownerName && formData.email;
-      case 2:
-        return formData.phone && formData.address && formData.city;
-      case 3:
-        return formData.password && formData.confirmPassword && 
-               formData.password === formData.confirmPassword;
-      default:
-        return true;
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.id_card || !formData.license) {
+      toast.error("Please upload both required documents");
+      return;
+    }
+    
+    if (!acceptTerms) {
+      toast.error("Please accept the terms and conditions");
+      return;
+    }
+    
     setIsLoading(true);
-    const newForm = new FormData();
-    newForm.append('salonName', formData.salonName)
-    newForm.append('email', formData.email)
-    newForm.append('ownerName', formData.ownerName)
-    newForm.append('password', formData.password)
-    newForm.append('confirmPassword', formData.confirmPassword)
-    newForm.append('phone', formData.phone)
-    newForm.append('address', formData.address)
-    newForm.append('city', formData.city)
-    newForm.append('openingHours', formData.openingHours)
+    
+    const form = new FormData();
+    Object.keys(formData).forEach(key => {
+      if (key === 'id_card' || key === 'license') {
+        if (formData[key]) {
+          form.append(key, formData[key]);
+        }
+      } else if (formData[key] !== null && key !== 'confirmPassword') {
+        form.append(key, formData[key]);
+      }
+    });
 
     try {
       const response = await fetch('/api/auth/salons/register', {
         method: 'POST',
-        body: newForm,
+        body: form,
       });
       
       const data = await response.json();
-      console.log(data, 'the data is');
+      
       if (response.ok) {
-        // Handle successful registration
-        toast.success('Registration successful')
-        router.push('/salon/otp-verification')
+        toast.success('Registration successful! Please check your email for verification.');
+        router.push('/salon/otp-verification');
       } else {
-        // Handle errors
-        console.error('Registration failed:', data.message);
+        toast.error(data.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
       console.error('Error:', error);
+      toast.error('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(()=>{
+    let token = getAuthToken('salon')
+    if(token){
+      router.push('/salon-dashboard/')
+    }
+  },[])
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <motion.div 
@@ -96,12 +162,11 @@ export default function SalonSignupPage() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Progress Bar */}
         <div className="h-2 bg-gray-200">
           <motion.div
             className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
             initial={{ width: "0%" }}
-            animate={{ width: `${(step / 3) * 100}%` }}
+            animate={{ width: `${(step / 4) * 100}%` }}
             transition={{ duration: 0.5 }}
           />
         </div>
@@ -130,13 +195,12 @@ export default function SalonSignupPage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
             >
-              Step {step} of 3
+              Step {step} of 4
             </motion.p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <AnimatePresence mode="wait">
-              {/* Step 1: Basic Information */}
               {step === 1 && (
                 <motion.div
                   key="step1"
@@ -153,8 +217,8 @@ export default function SalonSignupPage() {
                     <div className="relative">
                       <input
                         type="text"
-                        name="salonName"
-                        value={formData.salonName}
+                        name="salon_name"
+                        value={formData.salon_name}
                         onChange={handleChange}
                         placeholder="Salon Elegance"
                         required
@@ -171,8 +235,8 @@ export default function SalonSignupPage() {
                     <div className="relative">
                       <input
                         type="text"
-                        name="ownerName"
-                        value={formData.ownerName}
+                        name="owner_name"
+                        value={formData.owner_name}
                         onChange={handleChange}
                         placeholder="John Doe"
                         required
@@ -215,7 +279,6 @@ export default function SalonSignupPage() {
                 </motion.div>
               )}
 
-              {/* Step 2: Contact Information */}
               {step === 2 && (
                 <motion.div
                   key="step2"
@@ -232,8 +295,8 @@ export default function SalonSignupPage() {
                     <div className="relative">
                       <input
                         type="tel"
-                        name="phone"
-                        value={formData.phone}
+                        name="phone_number"
+                        value={formData.phone_number}
                         onChange={handleChange}
                         placeholder="+1 555 555 5555"
                         required
@@ -245,13 +308,13 @@ export default function SalonSignupPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Address *
+                      Street Address *
                     </label>
                     <div className="relative">
                       <input
                         type="text"
-                        name="address"
-                        value={formData.address}
+                        name="street_info"
+                        value={formData.street_info}
                         onChange={handleChange}
                         placeholder="123 Beauty Street"
                         required
@@ -261,19 +324,85 @@ export default function SalonSignupPage() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        placeholder="New York"
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        State *
+                      </label>
+                      <input
+                        type="text"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        placeholder="NY"
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Country
+                      </label>
+                      <select
+                        name="country"
+                        value={formData.country}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      >
+                        <option value="United States">United States</option>
+                        <option value="Canada">Canada</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Postal Code
+                      </label>
+                      <input
+                        type="text"
+                        name="postal_code"
+                        value={formData.postal_code}
+                        onChange={handleChange}
+                        placeholder="10001"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      City *
+                      Business Days
                     </label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
+                    <select
+                      name="days"
+                      value={formData.days}
                       onChange={handleChange}
-                      placeholder="New York"
-                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                    />
+                    >
+                      <option value="Monday,Tuesday,Wednesday,Thursday,Friday,Saturday">Monday - Saturday</option>
+                      <option value="Monday,Tuesday,Wednesday,Thursday,Friday">Monday - Friday</option>
+                      <option value="Tuesday,Wednesday,Thursday,Friday,Saturday">Tuesday - Saturday</option>
+                      <option value="Monday,Wednesday,Friday,Saturday">Mon, Wed, Fri, Sat</option>
+                    </select>
                   </div>
 
                   <div>
@@ -282,8 +411,8 @@ export default function SalonSignupPage() {
                     </label>
                     <div className="relative">
                       <select
-                        name="openingHours"
-                        value={formData.openingHours}
+                        name="opening_hours"
+                        value={formData.opening_hours}
                         onChange={handleChange}
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none"
                       >
@@ -295,10 +424,23 @@ export default function SalonSignupPage() {
                       <FaClock className="absolute left-3 top-3.5 text-gray-400" />
                     </div>
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Salon Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      placeholder="Tell us about your salon..."
+                      rows="3"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                    />
+                  </div>
                 </motion.div>
               )}
 
-              {/* Step 3: Security */}
               {step === 3 && (
                 <motion.div
                   key="step3"
@@ -347,6 +489,96 @@ export default function SalonSignupPage() {
                       <FaLock className="absolute left-3 top-3.5 text-gray-400" />
                     </div>
                   </div>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div
+                  key="step4"
+                  initial={{ x: 100, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -100, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Document Verification</h3>
+                    <p className="text-sm text-gray-500 mb-6">
+                      Please upload the required documents for verification. These will be used to verify your business.
+                    </p>
+
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Owner ID Card (Front) *
+                          <span className="ml-1 text-xs text-gray-500">(Government issued ID)</span>
+                        </label>
+                        <div className="mt-1 flex items-center">
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <FaIdCard className="mb-3 text-gray-400 text-2xl" />
+                              {formData.id_card ? (
+                                <p className="text-sm text-gray-500">{formData.id_card.name}</p>
+                              ) : (
+                                <>
+                                  <p className="mb-2 text-sm text-gray-500">
+                                    <span className="font-semibold">Click to upload</span> or drag and drop
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    JPG, PNG or PDF (MAX. 5MB)
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                            <input
+                              id="id_card"
+                              name="id_card"
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              required
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Business License *
+                          <span className="ml-1 text-xs text-gray-500">(Official business registration)</span>
+                        </label>
+                        <div className="mt-1 flex items-center">
+                          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <FaFileAlt className="mb-3 text-gray-400 text-2xl" />
+                              {formData.license ? (
+                                <p className="text-sm text-gray-500">{formData.license.name}</p>
+                              ) : (
+                                <>
+                                  <p className="mb-2 text-sm text-gray-500">
+                                    <span className="font-semibold">Click to upload</span> or drag and drop
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    JPG, PNG or PDF (MAX. 5MB)
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                            <input
+                              id="license"
+                              name="license"
+                              type="file"
+                              accept="image/*,.pdf"
+                              onChange={handleFileChange}
+                              className="hidden"
+                              required
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="flex items-start pt-2">
                     <div className="flex items-center h-5">
@@ -362,11 +594,11 @@ export default function SalonSignupPage() {
                     <div className="ml-3 text-sm">
                       <label htmlFor="terms" className="text-gray-600">
                         I agree to the{' '}
-                        <Link href="#" className="text-blue-600 hover:underline">
+                        <Link href="/terms" className="text-blue-600 hover:underline">
                           Terms of Service
                         </Link>{' '}
                         and{' '}
-                        <Link href="#" className="text-blue-600 hover:underline">
+                        <Link href="/privacy" className="text-blue-600 hover:underline">
                           Privacy Policy
                         </Link>
                       </label>
@@ -392,16 +624,13 @@ export default function SalonSignupPage() {
                 <div></div>
               )}
 
-              {step < 3 ? (
+              {step < 4 ? (
                 <motion.button
                   type="button"
                   onClick={nextStep}
-                  disabled={!validateStep(step)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition ${
-                    !validateStep(step) ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   Next
                   <FaChevronRight className="ml-2" />
@@ -409,11 +638,11 @@ export default function SalonSignupPage() {
               ) : (
                 <motion.button
                   type="submit"
-                  disabled={isLoading || !acceptTerms}
+                  disabled={isLoading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={`flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition ${
-                    isLoading || !acceptTerms ? 'opacity-50 cursor-not-allowed' : ''
+                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
                   {isLoading ? (
@@ -453,7 +682,7 @@ export default function SalonSignupPage() {
 
           <div className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{' '}
-            <Link href="/salon/signin" className="text-blue-600 hover:underline">
+            <Link href="/salon/login" className="text-blue-600 hover:underline">
               Login here
             </Link>
           </div>

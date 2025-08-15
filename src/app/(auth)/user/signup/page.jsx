@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { FaChevronLeft, FaChevronRight, FaCheck, FaUser, FaLock, FaPhone, FaMapMarkerAlt, FaBirthdayCake, FaVenusMars } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { getAuthToken } from "@/lib/cookiesAction";
 
 export default function UserSignupPage() {
   const [step, setStep] = useState(1);
@@ -86,6 +87,13 @@ export default function UserSignupPage() {
     }
   };
 
+
+  useEffect(()=>{
+    let token = getAuthToken('user')
+    if(token){
+      router.replace("/user-dashboard")
+    }
+  },[])
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <motion.div 
@@ -435,7 +443,7 @@ export default function UserSignupPage() {
 
           <div className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{' '}
-            <Link href="/user/login" className="text-blue-600 hover:underline">
+            <Link href="/user/signin" className="text-blue-600 hover:underline">
               Login here
             </Link>
           </div>

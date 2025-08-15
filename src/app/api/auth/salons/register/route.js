@@ -1,8 +1,13 @@
 import bcrypt from 'bcryptjs';
-// import { sendVerificationEmail } from '@/lib/email';
 import { query } from '@/lib/dbConnection';
 import generateOTP from '@/utils/otp';
 import { cookies } from 'next/headers';
+import fs from 'fs/promises';
+import path from 'path';
+
+// Configure upload directory
+const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/salons');
+const UPLOAD_PATH_PREFIX = '/uploads/salons/';
 
 // Helper functions
 const createResponse = (data, status = 200) => 
@@ -19,17 +24,37 @@ const handleError = (error, context) => {
   );
 };
 
+// Ensure upload directory exists
+async function ensureUploadDir() {
+  try {
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  } catch (err) {
+    console.error('Error creating upload directory:', err);
+  }
+}
+
+// Save uploaded file and return the public URL
+async function saveUploadedFile(file) {
+  await ensureUploadDir();
+  const fileName = `${Date.now()}-${file.name}`;
+  const filePath = path.join(UPLOAD_DIR, fileName);
+  const fileBuffer = await file.arrayBuffer();
+  await fs.writeFile(filePath, Buffer.from(fileBuffer));
+  return `${UPLOAD_PATH_PREFIX}${fileName}`;
+}
+
 // GET - List all salons
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const city = searchParams.get('city');
-    const service = searchParams.get('service');
+    const state = searchParams.get('state');
     const verified = searchParams.get('verified');
 
     let sql = `SELECT 
       id, salon_name, owner_name, email, phone_number, 
-      address, city, opening_hours, services, is_verified,
+      street, city, state, country, postal_code,
+      days, opening_hours, description, is_verified,
       DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,
       DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
     FROM salons WHERE 1=1`;
@@ -40,9 +65,9 @@ export async function GET(request) {
       params.push(`%${city}%`);
     }
 
-    if (service) {
-      sql += ` AND services LIKE ?`;
-      params.push(`%${service}%`);
+    if (state) {
+      sql += ` AND state LIKE ?`;
+      params.push(`%${state}%`);
     }
 
     if (verified) {
@@ -56,7 +81,7 @@ export async function GET(request) {
 
     // Remove sensitive data
     const sanitizedSalons = salons.map(salon => {
-      const { password_hash, otp_code, otp_expires_at, ...rest } = salon;
+      const { password_hash, otp_code, otp_expires_at, id_card, license, ...rest } = salon;
       return rest;
     });
 
@@ -66,26 +91,35 @@ export async function GET(request) {
   }
 }
 
-// POST - Create new salon
+// POST - Create new salon with image uploads
 export async function POST(request) {
   try {
     const formData = await request.formData();
-    console.log(formData);
+    
+    // Extract text fields
     const salonData = {
-      salon_name: formData.get('salonName'),
-      owner_name: formData.get('ownerName'),
+      salon_name: formData.get('salon_name'),
+      owner_name: formData.get('owner_name'),
       email: formData.get('email'),
       password: formData.get('password'),
-      phone_number: formData.get('phone'),
-      address: formData.get('address'),
+      phone_number: formData.get('phone_number'),
+      street_info: formData.get('street_info'),
       city: formData.get('city'),
-      opening_hours: formData.get('openingHours'),
+      state: formData.get('state'),
+      country: formData.get('country'),
+      postal_code: formData.get('postal_code'),
+      days: formData.get('days'),
+      opening_hours: formData.get('opening_hours'),
+      description: formData.get('description')
     };
 
     // Basic validation
-    if (!salonData.salon_name || !salonData.owner_name || !salonData.email || !salonData.password) {
+    const requiredFields = ['salon_name', 'owner_name', 'email', 'password'];
+    const missingFields = requiredFields.filter(field => !salonData[field]);
+    
+    if (missingFields.length > 0) {
       return createResponse(
-        { success: false, message: 'Missing required fields' },
+        { success: false, message: `Missing required fields: ${missingFields.join(', ')}` },
         400
       );
     }
@@ -97,6 +131,33 @@ export async function POST(request) {
         { success: false, message: 'Email already registered' },
         409
       );
+    }
+
+    // Handle image uploads
+    const idCardFile = formData.get('id_card');
+    const licenseFile = formData.get('license');
+
+    let idCardUrl = null;
+    let licenseUrl = null;
+
+    if (idCardFile && idCardFile.size > 0) {
+      if (!idCardFile.type.startsWith('image/')) {
+        return createResponse(
+          { success: false, message: 'ID card must be an image file' },
+          400
+        );
+      }
+      idCardUrl = await saveUploadedFile(idCardFile);
+    }
+
+    if (licenseFile && licenseFile.size > 0) {
+      if (!licenseFile.type.startsWith('image/')) {
+        return createResponse(
+          { success: false, message: 'License must be an image file' },
+          400
+        );
+      }
+      licenseUrl = await saveUploadedFile(licenseFile);
     }
 
     // Hash password
@@ -111,40 +172,50 @@ export async function POST(request) {
     const result = await query(
       `INSERT INTO salons (
         salon_name, owner_name, email, password_hash, phone_number,
-        address, city, opening_hours, otp_code, otp_expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,  ?)`,
+        street_info, city, state, country, postal_code,
+        days, opening_hours, description, id_card, license,
+        otp_code, otp_expires_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         salonData.salon_name,
         salonData.owner_name,
         salonData.email,
         password_hash,
         salonData.phone_number,
-        salonData.address,
+        salonData.street_info,
         salonData.city,
+        salonData.state,
+        salonData.country,
+        salonData.postal_code,
+        salonData.days,
         salonData.opening_hours,
+        salonData.description,
+        idCardUrl,
+        licenseUrl,
         otp_code,
         otp_expires_at
       ]
     );
 
-    // Send verification email
-    // await sendVerificationEmail(salonData.email, otp_code);
-    console.log(otp_code);
+   
 
     // Get the created salon (without sensitive data)
     const [newSalon] = await query(
       `SELECT 
         id, salon_name, owner_name, email, phone_number,
-        address, city, opening_hours,  is_verified,
+        street_info, city, state, country, postal_code,
+        days, opening_hours, description, is_verified, active,
         DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at
       FROM salons WHERE id = ?`,
       [result.insertId]
     );
-cookies().set('email', salonData.email, {
+
+    // Set email cookie for verification
+    cookies().set('email', salonData.email, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 , 
+      maxAge: 60 * 60, // 1 hour
       path: '/',
     });
 

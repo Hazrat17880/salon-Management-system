@@ -1,143 +1,193 @@
-import { query } from '@/lib/db';
-import bcrypt from 'bcryptjs';
-import isAuthenticated from '@/middleware/authenticateAdmin';
+import { withSalonAuth } from '@/lib/authSalon';
+import { query } from '@/lib/dbConnection';
+import { deleteOldImage, saveUploadedFile } from '@/middleware/ImageSaveDelete';
+import path from 'path';
 
-const createResponse = (data, status = 200) => 
-  new Response(JSON.stringify(data), {
+// Configure upload directory
+const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/salons');
+const UPLOAD_PATH_PREFIX = '/uploads/salons/';
+
+// Helper function to create consistent responses
+function createResponse({ success, message, data = null, status = 200 }) {
+  return new Response(JSON.stringify({ success, message, data }), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' }
   });
+}
 
-// GET - Get single salon
-export async function GET(request, { params }) {
+// GET - Get salon profile
+const getProfileHandler = async (request) => {
   try {
-    const { id } = params;
-
     const [salon] = await query(
       `SELECT 
         id, salon_name, owner_name, email, phone_number,
-        address, city, opening_hours, services, is_verified,
+        street_info, city, state, country, postal_code,
+        days, opening_hours, description, is_verified, active, license, id_card,
         DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,
         DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
       FROM salons WHERE id = ?`,
-      [id]
+      [request.salon.id]
     );
 
     if (!salon) {
-      return createResponse(
-        { success: false, message: 'Salon not found' },
-        404
-      );
+      return createResponse({
+        success: false,
+        message: 'Salon not found',
+        status: 404
+      });
     }
 
-    return createResponse({ success: true, data: salon });
+    return createResponse({
+      success: true,
+      message: 'Salon profile retrieved successfully',
+      data: salon
+    });
   } catch (error) {
-    return handleError(error, 'fetch salon');
+    console.error('Error fetching salon profile:', error);
+    return createResponse({
+      success: false,
+      message: 'Failed to fetch salon profile',
+      status: 500,
+      data: { error: error.message }
+    });
   }
-}
+};
 
-// PUT - Update salon
-export async function PUT(request, { params }) {
+// PUT/PATCH - Update salon profile
+const updateProfileHandler = async (request) => {
   try {
-    const { id } = params;
-    const userId = await isAuthenticated(request);
+    const formData = await request.formData();
     
-    if (!userId) {
-      return createResponse(
-        { success: false, message: 'Unauthorized' },
-        401
-      );
+    // Get current salon data to check for existing files
+    const [currentSalon] = await query(
+      'SELECT id_card, license FROM salons WHERE id = ?',
+      [request.salon.id]
+    );
+    
+    if (!currentSalon) {
+      return createResponse({
+        success: false,
+        message: 'Salon not found',
+        status: 404
+      });
     }
 
-    const formData = await request.formData();
+    // Extract updatable fields
     const updateData = {
       salon_name: formData.get('salon_name'),
       owner_name: formData.get('owner_name'),
       phone_number: formData.get('phone_number'),
-      address: formData.get('address'),
+      street_info: formData.get('street_info'),
       city: formData.get('city'),
+      state: formData.get('state'),
+      country: formData.get('country'),
+      postal_code: formData.get('postal_code'),
+      days: formData.get('days'),
       opening_hours: formData.get('opening_hours'),
-      services: formData.get('services')
+      description: formData.get('description')
     };
 
-    // Check if salon exists
-    const [existing] = await query('SELECT id FROM salons WHERE id = ?', [id]);
-    if (!existing) {
-      return createResponse(
-        { success: false, message: 'Salon not found' },
-        404
-      );
+    // Handle file uploads
+    const idCardFile = formData.get('id_card');
+    const licenseFile = formData.get('license');
+
+    if (idCardFile && idCardFile.size > 0) {
+      if (!idCardFile.type.startsWith('image/') && !idCardFile.type.includes('pdf')) {
+        return createResponse({
+          success: false,
+          message: 'ID card must be an image or PDF file',
+          status: 400
+        });
+      }
+      // Delete old file if exists
+      if (currentSalon.id_card) {
+        await deleteOldImage(currentSalon.id_card, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+      }
+      updateData.id_card = await saveUploadedFile(idCardFile, UPLOAD_DIR, UPLOAD_PATH_PREFIX);
     }
 
-    // Update salon
-    await query(
-      `UPDATE salons SET
-        salon_name = ?,
-        owner_name = ?,
-        phone_number = ?,
-        address = ?,
-        city = ?,
-        opening_hours = ?,
-        services = ?
-      WHERE id = ?`,
-      [
-        updateData.salon_name,
-        updateData.owner_name,
-        updateData.phone_number,
-        updateData.address,
-        updateData.city,
-        updateData.opening_hours,
-        updateData.services,
-        id
-      ]
-    );
+    if (licenseFile && licenseFile.size > 0) {
+      if (!licenseFile.type.startsWith('image/') && !licenseFile.type.includes('pdf')) {
+        return createResponse({
+          success: false,
+          message: 'License must be an image or PDF file',
+          status: 400
+        });
+      }
+      // Delete old file if exists
+      if (currentSalon.license) {
+        await deleteOldImage(currentSalon.license, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+      }
+      updateData.license = await saveUploadedFile(licenseFile, UPLOAD_DIR, UPLOAD_PATH_PREFIX);
+    }
 
-    // Get updated salon
+    // Handle explicit file removal
+    if (formData.get('remove_id_card') === 'true') {
+      if (currentSalon.id_card) {
+        await deleteOldImage(currentSalon.id_card, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+      }
+      updateData.id_card = null;
+    }
+
+    if (formData.get('remove_license') === 'true') {
+      if (currentSalon.license) {
+        await deleteOldImage(currentSalon.license, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+      }
+      updateData.license = null;
+    }
+
+    // Build SQL update query
+    const updateFields = [];
+    const params = [];
+    
+    for (const [field, value] of Object.entries(updateData)) {
+      if (value !== null && value !== undefined) {
+        updateFields.push(`${field} = ?`);
+        params.push(value);
+      }
+    }
+
+    if (updateFields.length === 0) {
+      return createResponse({
+        success: false,
+        message: 'No fields to update',
+        status: 400
+      });
+    }
+
+    params.push(request.salon.id);
+    const sql = `UPDATE salons SET ${updateFields.join(', ')} WHERE id = ?`;
+    await query(sql, params);
+
+    // Get the updated salon
     const [updatedSalon] = await query(
       `SELECT 
         id, salon_name, owner_name, email, phone_number,
-        address, city, opening_hours, services, is_verified,
+        street_info, city, state, country, postal_code,
+        days, opening_hours, description, is_verified, active,
         DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,
         DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
       FROM salons WHERE id = ?`,
-      [id]
+      [request.salon.id]
     );
 
-    return createResponse({ success: true, data: updatedSalon });
+    return createResponse({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedSalon
+    });
   } catch (error) {
-    return handleError(error, 'update salon');
+    console.error('Error updating salon profile:', error);
+    return createResponse({
+      success: false,
+      message: 'Failed to update salon profile',
+      status: 500,
+      data: { error: error.message }
+    });
   }
-}
+};
 
-// DELETE - Remove salon
-export async function DELETE(request, { params }) {
-  try {
-    const { id } = params;
-    const userId = await isAuthenticated(request);
-    
-    if (!userId) {
-      return createResponse(
-        { success: false, message: 'Unauthorized' },
-        401
-      );
-    }
-
-    // Check if salon exists
-    const [existing] = await query('SELECT id FROM salons WHERE id = ?', [id]);
-    if (!existing) {
-      return createResponse(
-        { success: false, message: 'Salon not found' },
-        404
-      );
-    }
-
-    // Delete salon
-    await query('DELETE FROM salons WHERE id = ?', [id]);
-
-    return createResponse(
-      { success: true, message: 'Salon deleted successfully' }
-    );
-  } catch (error) {
-    return handleError(error, 'delete salon');
-  }
-}
+// Export the handlers wrapped with salon authentication
+export const GET = withSalonAuth(getProfileHandler);
+export const PUT = withSalonAuth(updateProfileHandler);
+export const PATCH = withSalonAuth(updateProfileHandler);

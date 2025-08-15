@@ -7,6 +7,7 @@ export async function POST(request) {
   try {
     const {  otp } = await request.json();
      const cookieStore = cookies();
+     console.log(otp, request.json());
  const email = cookieStore.get('email')?.value
     if (!email || !otp) {
       return new Response(JSON.stringify({ 

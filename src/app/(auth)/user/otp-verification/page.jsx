@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FaArrowLeft, FaCheckCircle, FaRegClock } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { setAuthToken } from "@/lib/cookiesAction";
 
 export default function UserOTPVerification() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -76,6 +77,7 @@ export default function UserOTPVerification() {
 
       setIsVerified(true);
       toast.success('Your account has been verified successfully!');
+      setAuthToken('user')
       router.push("/user-dashboard");
 
     } catch (err) {
