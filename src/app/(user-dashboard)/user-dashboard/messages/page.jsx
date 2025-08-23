@@ -1,12 +1,10 @@
-"use client"
 import MessagesContent from '@/component/Customer/Message';
-import React, { useState } from 'react';
+import React from 'react';
 
 const Page = () => {
-  const [messages, setMessages] = useState([]);
 
     return (
-      <MessagesContent messages={messages} />
+      <MessagesContent />
     );
 }
 

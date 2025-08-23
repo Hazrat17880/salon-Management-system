@@ -11,6 +11,8 @@ import {
   FiSettings,
 } from "react-icons/fi";
 import { RiDashboardFill, RiScissorsFill } from "react-icons/ri";
+import useLogout from "../hooks/SalonLogout";
+import { MessageSquare } from "lucide-react";
 
 export default function SalonsSideBar() {
   const router = useRouter();
@@ -23,6 +25,8 @@ export default function SalonsSideBar() {
     { id: "appointments", icon: <FiCalendar size={20} />, label: "Appointments", href: "/salon-dashboard/appointments" },
     { id: "customers", icon: <FiUsers size={20} />, label: "Customers", href: "/salon-dashboard/customers" },
     { id: "services", icon: <FiSettings size={20} />, label: "Services", href: "/salon-dashboard/services" },
+    { id: "messages", icon: <MessageSquare size={20} />, label: "Messages", href: "/salon-dashboard/messages" },
+
     { id: "profile", icon: <FiSettings size={20} />, label: "Profile Setting", href: "/salon-dashboard/profile" },
   ];
 
@@ -32,6 +36,7 @@ export default function SalonsSideBar() {
     if (window.innerWidth < 1024) setSidebarOpen(false);
   }
 
+const logout = useLogout();
   return (
     <>
       <AnimatePresence>
@@ -91,7 +96,7 @@ export default function SalonsSideBar() {
 
         <div className="mt-auto p-6 border-t border-gray-200/70 flex items-center justify-between">
           <button
-            onClick={() => alert("Logout clicked")}
+            onClick={logout}
             className="flex items-center text-red-600 hover:text-red-700 font-semibold"
             aria-label="Logout"
           >

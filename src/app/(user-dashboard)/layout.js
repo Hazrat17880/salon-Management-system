@@ -29,6 +29,7 @@ export default function CustomerLayout({ children }) {
 
   return (
     <div className="bg-gray-50 h-screen flex flex-col">
+      
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
@@ -43,6 +44,7 @@ export default function CustomerLayout({ children }) {
           activeTab={activeTab}
           onMenuToggle={toggleMobileMenu}
           mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
           unreadNotifications={unreadNotifications}
           profileData={profileData}
         />

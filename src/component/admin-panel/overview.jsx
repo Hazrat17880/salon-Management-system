@@ -24,44 +24,40 @@ import {
   ResponsiveContainer 
 } from "recharts";
 
-const Overview = () => {
-  // Sample data for charts
-  const revenueData = [
-    { name: 'Jan', revenue: 4000 },
-    { name: 'Feb', revenue: 3000 },
-    { name: 'Mar', revenue: 5000 },
-    { name: 'Apr', revenue: 2780 },
-    { name: 'May', revenue: 1890 },
-    { name: 'Jun', revenue: 2390 },
-  ];
+const Overview = ({ profileData, appointments, notifications, services, dashboardData }) => {
+  // Transform revenue data for chart
+  const revenueData = dashboardData?.revenueByMonth?.map(item => ({
+    name: getMonthName(item.month),
+    revenue: item.revenue,
+    completedAppointments: item.completedAppointments
+  })) || [];
 
-  const bookingTrendData = [
-    { name: 'Week 1', bookings: 240 },
-    { name: 'Week 2', bookings: 139 },
-    { name: 'Week 3', bookings: 380 },
-    { name: 'Week 4', bookings: 278 },
-  ];
+  // Transform booking data for chart
+  const bookingTrendData = dashboardData?.weeklyBookings?.map(item => ({
+    name: `Week ${item.week}`,
+    bookings: item.bookings
+  })) || [];
 
-  const serviceDistributionData = [
-    { name: 'Hair Services', value: 45 },
-    { name: 'Nail Services', value: 30 },
-    { name: 'Skin Services', value: 15 },
-    { name: 'Other', value: 10 },
-  ];
+  // Transform service distribution data for chart
+  const serviceDistributionData = dashboardData?.servicesRevenue?.map(item => ({
+    name: item.serviceName,
+    value: item.completedCount,
+    revenue: item.totalRevenue
+  })) || [];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF', '#FF6B6B'];
 
-  const notifications = [
-    { id: 1, type: "warning", message: "New salon registration requires approval", time: "2 hours ago", read: false },
-    { id: 2, type: "complaint", message: "Customer complaint about Elite Salon", time: "5 hours ago", read: true },
-    { id: 3, type: "system", message: "System update available", time: "1 day ago", read: true }
-  ];
+  // Helper function to get month name
+  function getMonthName(monthNumber) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[monthNumber - 1] || `Month ${monthNumber}`;
+  }
 
-  const complaints = [
-    { id: 1, from: "Emma Watson", against: "Elite Salon", type: "Service Quality", date: "10 Jun 2023", status: "pending", message: "Color didn't match what I asked for" },
-    { id: 2, from: "Olivia Parker", against: "Glamour Studio", type: "Hygiene", date: "12 Jun 2023", status: "resolved", message: "Tools were not properly sanitized" },
-    { id: 3, from: "Sophia Lee", against: "Luxe Beauty", type: "Staff Behavior", date: "14 Jun 2023", status: "investigating", message: "Stylist was rude during service" }
-  ];
+  // Calculate stats from dashboard data
+  const totalRevenue = dashboardData?.servicesRevenue?.reduce((sum, service) => sum + service.totalRevenue, 0) || 0;
+  const completedAppointments = dashboardData?.appointments?.completed || 0;
+  const pendingAppointments = dashboardData?.appointments?.pending || 0;
+  const activeServices = services?.filter(service => service.active).length || 0;
 
   const markNotificationAsRead = (id) => {
     // Implementation would update the read status
@@ -70,15 +66,15 @@ const Overview = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Admin Dashboard</h2>
+      <h2 className="text-2xl font-bold text-gray-800">Salon Dashboard</h2>
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Salons</p>
-              <h3 className="text-2xl font-bold">24</h3>
+              <p className="text-sm text-gray-500">Active Services</p>
+              <h3 className="text-2xl font-bold">{activeServices}</h3>
             </div>
             <div className="p-3 rounded-full bg-blue-100 text-blue-600">
               <FiUser size={20} />
@@ -89,22 +85,10 @@ const Overview = () => {
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Total Customers</p>
-              <h3 className="text-2xl font-bold">1,245</h3>
+              <p className="text-sm text-gray-500">Completed Appointments</p>
+              <h3 className="text-2xl font-bold">{completedAppointments}</h3>
             </div>
             <div className="p-3 rounded-full bg-green-100 text-green-600">
-              <FiUsers size={20} />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Completed Appointments</p>
-              <h3 className="text-2xl font-bold">986</h3>
-            </div>
-            <div className="p-3 rounded-full bg-purple-100 text-purple-600">
               <FiCheckCircle size={20} />
             </div>
           </div>
@@ -113,8 +97,20 @@ const Overview = () => {
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="flex items-center justify-between">
             <div>
+              <p className="text-sm text-gray-500">Pending Appointments</p>
+              <h3 className="text-2xl font-bold">{pendingAppointments}</h3>
+            </div>
+            <div className="p-3 rounded-full bg-purple-100 text-purple-600">
+              <FiUsers size={20} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="flex items-center justify-between">
+            <div>
               <p className="text-sm text-gray-500">Total Revenue</p>
-              <h3 className="text-2xl font-bold">$42,560</h3>
+              <h3 className="text-2xl font-bold">${totalRevenue.toLocaleString()}</h3>
             </div>
             <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
               <FiDollarSign size={20} />
@@ -134,9 +130,17 @@ const Overview = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value) => [`$${value}`, 'Revenue']}
+                />
                 <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} />
+                <Line 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#8884d8" 
+                  strokeWidth={2} 
+                  name="Revenue"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -153,44 +157,52 @@ const Overview = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="bookings" fill="#82ca9d" />
+                <Bar dataKey="bookings" fill="#82ca9d" name="Bookings" />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Service Distribution */}
+      {/* Service Performance */}
       <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="font-medium mb-4">Service Distribution</h3>
+        <h3 className="font-medium mb-4">Service Performance</h3>
         <div className="h-64 flex">
           <div className="w-1/2 h-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={serviceDistributionData}
+                  data={serviceDistributionData.slice(0, 6)} // Show top 6 services
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  nameKey="name"
                 >
-                  {serviceDistributionData.map((entry, index) => (
+                  {serviceDistributionData.slice(0, 6).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value, name, props) => [
+                    `${props.payload.revenue ? `$${props.payload.revenue}` : value}`, 
+                    props.payload.revenue ? 'Revenue' : 'Completed'
+                  ]}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="w-1/2 flex items-center justify-center">
             <div className="space-y-2">
-              {serviceDistributionData.map((service, index) => (
-                <div key={index} className="flex items-center">
-                  <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                  <span>{service.name}</span>
+              {serviceDistributionData.slice(0, 6).map((service, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                    <span className="text-sm">{service.name}</span>
+                  </div>
+                  <span className="text-sm font-medium">${service.revenue}</span>
                 </div>
               ))}
             </div>
@@ -235,30 +247,31 @@ const Overview = () => {
           </div>
         </div>
 
-        {/* Recent Complaints */}
+        {/* Recent Appointments */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-4 border-b">
             <h3 className="font-medium flex items-center">
-              <FiAlertCircle className="mr-2" /> Recent Complaints
+              <FiCheckCircle className="mr-2" /> Recent Appointments
             </h3>
           </div>
           <div className="divide-y">
-            {complaints.slice(0, 3).map(complaint => (
-              <div key={complaint.id} className="p-4">
+            {appointments.slice(0, 3).map(appointment => (
+              <div key={appointment.id} className="p-4">
                 <div className="flex justify-between">
                   <div>
-                    <p className="font-medium">{complaint.from}</p>
-                    <p className="text-sm text-gray-500">Against: {complaint.against}</p>
+                    <p className="font-medium">{appointment.customer}</p>
+                    <p className="text-sm text-gray-500">{appointment.service}</p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
-                    complaint.status === "resolved" ? "bg-green-100 text-green-800" :
-                    complaint.status === "investigating" ? "bg-yellow-100 text-yellow-800" :
+                    appointment.status === "completed" ? "bg-green-100 text-green-800" :
+                    appointment.status === "pending" ? "bg-yellow-100 text-yellow-800" :
                     "bg-red-100 text-red-800"
                   }`}>
-                    {complaint.status}
+                    {appointment.status}
                   </span>
                 </div>
-                <p className="mt-2 text-sm">{complaint.message}</p>
+                <p className="mt-2 text-sm">Date: {appointment.date}</p>
+                <p className="text-sm">Price: ${appointment.price}</p>
               </div>
             ))}
           </div>

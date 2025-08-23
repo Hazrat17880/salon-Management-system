@@ -1,118 +1,235 @@
 "use client";
-import { useState } from 'react';
-import { motion } from 'framer-motion';
 
-const ComplaintsContent = () => {
-  const [formData, setFormData] = useState({
-    subject: '',
-    appointment: '',
-    details: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Pencil, Trash2, Eye, X, Check, AlertTriangle } from "lucide-react";
+import { toast } from "react-toastify";
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+export default function ComplaintsManager() {
+  const [complaints, setComplaints] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingComplaint, setEditingComplaint] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [editType, setEditType] = useState("salon");
+  const [viewComplaint, setViewComplaint] = useState(null);
+  const [deleteComplaintId, setDeleteComplaintId] = useState(null);
+
+  // Fetch complaints
+  const fetchComplaints = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/complaints/user");
+      const data = await res.json();
+      setComplaints(data.data);
+    } catch (error) {
+      toast.error("Failed to load complaints");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate form submission
-    setTimeout(() => {
-      console.log('Complaint submitted:', formData);
-      setIsSubmitting(false);
-      setFormData({
-        subject: '',
-        appointment: '',
-        details: ''
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
+
+  // Delete complaint
+  const confirmDelete = async () => {
+    try {
+      await fetch(`/api/complaints/user/?id=${deleteComplaintId}`, { method: "DELETE" });
+      toast.success("Complaint deleted");
+      setDeleteComplaintId(null);
+      fetchComplaints();
+    } catch {
+      toast.error("Error deleting complaint");
+    }
+  };
+
+  // Update complaint
+  const updateComplaint = async () => {
+    if (!editText.trim()) {
+      toast.error("Complaint text cannot be empty");
+      return;
+    }
+    try {
+      await fetch(`/api/complaints/user/?id=${editingComplaint.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          complaint_about: editType,
+          description: editText,
+        }),
       });
-      // You would typically show a success message here
-    }, 1500);
+      toast.success("Complaint updated successfully");
+      setEditingComplaint(null);
+      fetchComplaints();
+    } catch {
+      toast.error("Error updating complaint");
+    }
   };
 
   return (
-    <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl shadow-sm">
-      <h3 className="text-xl font-semibold text-gray-800 mb-6">Submit a Complaint</h3>
-      
-      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-        <div>
-          <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-            Subject
-          </label>
-          <input
-            id="subject"
-            name="subject"
-            type="text"
-            value={formData.subject}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base transition"
-            placeholder="Brief description of your complaint"
-          />
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Complaints Management</h2>
+
+      {loading ? (
+        <p>Loading complaints...</p>
+      ) : (
+        <div className="grid gap-4">
+          {complaints?.map((c) => (
+            <motion.div
+              key={c.id}
+              className="bg-white rounded-xl shadow-md p-4 flex justify-between items-center"
+              whileHover={{ scale: 1.01 }}
+            >
+              <div>
+                <p className="text-sm text-gray-500">{c.complaint_about.toUpperCase()}</p>
+                <p className="font-medium">{c.description}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Submitted on {new Date(c.created_at).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setViewComplaint(c)}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <Eye size={20} />
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingComplaint(c);
+                    setEditText(c.description);
+                    setEditType(c.complaint_about);
+                  }}
+                  className="text-green-500 hover:text-green-700"
+                >
+                  <Pencil size={20} />
+                </button>
+                <button
+                  onClick={() => setDeleteComplaintId(c.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
         </div>
-        
-        <div>
-          <label htmlFor="appointment" className="block text-sm font-medium text-gray-700 mb-2">
-            Related Appointment
-          </label>
-          <select
-            id="appointment"
-            name="appointment"
-            value={formData.appointment}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base transition"
+      )}
+
+      {/* View Complaint Modal */}
+      {viewComplaint && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <motion.div
+            className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md relative"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
           >
-            <option value="">Select an appointment</option>
-            <option value="1">Haircut at Glamour Studio - June 15</option>
-            <option value="2">Manicure at Beauty Lounge - June 18</option>
-          </select>
+            <button
+              onClick={() => setViewComplaint(null)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+            >
+              <X size={22} />
+            </button>
+            <h3 className="text-lg font-bold mb-4">Complaint Details</h3>
+            <p>
+              <span className="font-semibold">Type:</span> {viewComplaint.complaint_about}
+            </p>
+            <p className="mt-2">
+              <span className="font-semibold">Description:</span> {viewComplaint.description}
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Submitted: {new Date(viewComplaint.created_at).toLocaleString()}
+            </p>
+          </motion.div>
         </div>
-        
-        <div>
-          <label htmlFor="details" className="block text-sm font-medium text-gray-700 mb-2">
-            Complaint Details
-          </label>
-          <textarea
-            id="details"
-            name="details"
-            rows={5}
-            value={formData.details}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm md:text-base transition"
-            placeholder="Please describe your complaint in detail..."
-          />
-        </div>
-        
-        <div className="flex justify-end pt-2">
-          <motion.button
-            type="submit"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            disabled={isSubmitting}
-            className={`px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm md:text-base font-medium transition ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-indigo-700'}`}
+      )}
+
+      {/* Edit Complaint Modal */}
+      {editingComplaint && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <motion.div
+            className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md relative"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
           >
-            {isSubmitting ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Submitting...
-              </span>
-            ) : (
-              'Submit Complaint'
-            )}
-          </motion.button>
+            <button
+              onClick={() => setEditingComplaint(null)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+            >
+              <X size={22} />
+            </button>
+            <h3 className="text-lg font-bold mb-4">Edit Complaint</h3>
+            <select
+              value={editType}
+              onChange={(e) => setEditType(e.target.value)}
+              className="w-full border rounded-lg p-2 mb-3"
+            >
+              <option value="salon">Salon</option>
+              <option value="services">Services</option>
+            </select>
+            <textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="w-full border rounded-lg p-3 h-32 resize-none"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={updateComplaint}
+                className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+              >
+                <Check size={20} /> Save
+              </button>
+              <button
+                onClick={() => setEditingComplaint(null)}
+                className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </form>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteComplaintId && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <motion.div
+            className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm relative text-center"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+          >
+            <button
+              onClick={() => setDeleteComplaintId(null)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+            >
+              <X size={22} />
+            </button>
+
+            <AlertTriangle className="text-red-500 mx-auto mb-4" size={40} />
+            <h3 className="text-lg font-bold mb-2">Delete Complaint?</h3>
+            <p className="text-gray-600 mb-6">
+              This action cannot be undone. Are you sure you want to permanently
+              delete this complaint?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteComplaintId(null)}
+                className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default ComplaintsContent;
+}

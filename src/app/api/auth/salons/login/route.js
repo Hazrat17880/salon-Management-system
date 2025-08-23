@@ -44,16 +44,16 @@ export async function POST(request) {
     }
 
     // Check if verified
-    if (!salon.is_verified) {
-      return createResponse(
-        { 
-          success: false, 
-          message: 'Account not verified. Please check your email.',
-          needsVerification: true
-        },
-        403
-      );
-    }
+    // if (!salon.is_verified) {
+    //   return createResponse(
+    //     { 
+    //       success: false, 
+    //       message: 'Account not verified. Please check your email.',
+    //       needsVerification: true
+    //     },
+    //     403
+    //   );
+    // }
 
     // Verify password
     const isMatch = await bcrypt.compare(password, salon.password_hash);

@@ -11,6 +11,7 @@ const createResponse = ({ success, message, data = null, status = 200 }) =>
 // GET - Get paginated list of salons
 const getSalons= withUserAuth(async(request)=> {
   try {
+    const id = await request.user.id;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
@@ -22,19 +23,17 @@ const getSalons= withUserAuth(async(request)=> {
     );
 
     // Get paginated salons
-    const salons = await query(
-      `SELECT 
-        id, salon_name, owner_name, email, phone_number,
-        street_info, city, state, country, postal_code,
-        days, opening_hours, description,
-        DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at
-       FROM salons 
-       WHERE active = TRUE AND is_verified = TRUE
-       ORDER BY created_at DESC
-       LIMIT ? OFFSET ?`,
-      [limit, offset]
+const salons = await query(
+  `SELECT *
+   FROM salons
+   WHERE active = 1 AND is_verified = 1
+   ORDER BY created_at DESC
+   LIMIT ? OFFSET ?`,
+  [limit, offset]   // force integers
+);
+    const favorite = await query(
+      'SELECT * FROM favorite_salon WHERE  user_id =?',[id]
     );
-
     return createResponse({
       success: true,
       message: 'Salons fetched successfully',
@@ -45,11 +44,13 @@ const getSalons= withUserAuth(async(request)=> {
           totalPages: Math.ceil(totalCount.count / limit),
           totalSalons: totalCount.count,
           salonsPerPage: limit
-        }
+        },
+        favorite
       }
     });
 
   } catch (error) {
+    console.log(error);
     return createResponse({
       success: false,
       message: 'Failed to fetch salons',

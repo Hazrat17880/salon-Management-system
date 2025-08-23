@@ -30,53 +30,85 @@ async function ensureUploadDir() {
     await fs.mkdir(UPLOAD_DIR, { recursive: true });
   } catch (err) {
     console.error('Error creating upload directory:', err);
+    throw err;
   }
 }
 
 // Save uploaded file and return the public URL
 async function saveUploadedFile(file) {
+  if (!file || file.size === 0) return null;
+  
   await ensureUploadDir();
-  const fileName = `${Date.now()}-${file.name}`;
+  const fileExt = path.extname(file.name);
+  const fileName = `${Date.now()}${fileExt}`;
   const filePath = path.join(UPLOAD_DIR, fileName);
   const fileBuffer = await file.arrayBuffer();
   await fs.writeFile(filePath, Buffer.from(fileBuffer));
   return `${UPLOAD_PATH_PREFIX}${fileName}`;
 }
 
-// GET - List all salons
+// GET - List all salons with pagination and filtering
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page')) || 1;
+    const limit = parseInt(searchParams.get('limit')) || 10;
+    const offset = (page - 1) * limit;
     const city = searchParams.get('city');
     const state = searchParams.get('state');
-    const verified = searchParams.get('verified');
+    const is_verified = searchParams.get('is_verified');
+    const active = searchParams.get('active');
 
+    // Base query
     let sql = `SELECT 
       id, salon_name, owner_name, email, phone_number, 
-      street, city, state, country, postal_code,
-      days, opening_hours, description, is_verified,
+      street_info, city, state, country, postal_code,
+      days, opening_hours, description, image,
+      is_verified, active,
       DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,
       DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
     FROM salons WHERE 1=1`;
+    
+    // Count query for pagination
+    let countSql = 'SELECT COUNT(*) as total FROM salons WHERE 1=1';
     const params = [];
+    const countParams = [];
 
+    // Apply filters
     if (city) {
       sql += ` AND city LIKE ?`;
+      countSql += ` AND city LIKE ?`;
       params.push(`%${city}%`);
+      countParams.push(`%${city}%`);
     }
 
     if (state) {
       sql += ` AND state LIKE ?`;
+      countSql += ` AND state LIKE ?`;
       params.push(`%${state}%`);
+      countParams.push(`%${state}%`);
     }
 
-    if (verified) {
+    if (is_verified) {
       sql += ` AND is_verified = ?`;
-      params.push(verified === 'true' ? 1 : 0);
+      countSql += ` AND is_verified = ?`;
+      params.push(is_verified === 'true' ? 1 : 0);
+      countParams.push(is_verified === 'true' ? 1 : 0);
     }
 
-    sql += ` ORDER BY created_at DESC`;
+    if (active) {
+      sql += ` AND active = ?`;
+      countSql += ` AND active = ?`;
+      params.push(active === 'true' ? 1 : 0);
+      countParams.push(active === 'true' ? 1 : 0);
+    }
 
+    // Add pagination
+    sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
+    // Execute queries
+    const [countResult] = await query(countSql, countParams);
     const salons = await query(sql, params);
 
     // Remove sensitive data
@@ -85,7 +117,18 @@ export async function GET(request) {
       return rest;
     });
 
-    return createResponse({ success: true, data: sanitizedSalons });
+    return createResponse({ 
+      success: true, 
+      data: {
+        salons: sanitizedSalons,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(countResult.total / limit),
+          totalItems: countResult.total,
+          itemsPerPage: limit
+        }
+      }
+    });
   } catch (error) {
     return handleError(error, 'fetch salons');
   }
@@ -124,6 +167,14 @@ export async function POST(request) {
       );
     }
 
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(salonData.email)) {
+      return createResponse(
+        { success: false, message: 'Invalid email format' },
+        400
+      );
+    }
+
     // Check if email exists
     const existing = await query('SELECT id FROM salons WHERE email = ?', [salonData.email]);
     if (existing.length > 0) {
@@ -133,31 +184,33 @@ export async function POST(request) {
       );
     }
 
-    // Handle image uploads
+    // Handle file uploads
     const idCardFile = formData.get('id_card');
     const licenseFile = formData.get('license');
+    const salonImageFile = formData.get('image');
 
-    let idCardUrl = null;
-    let licenseUrl = null;
+    const [idCardUrl, licenseUrl, imageUrl] = await Promise.all([
+      saveUploadedFile(idCardFile),
+      saveUploadedFile(licenseFile),
+      saveUploadedFile(salonImageFile)
+    ]);
 
-    if (idCardFile && idCardFile.size > 0) {
-      if (!idCardFile.type.startsWith('image/')) {
-        return createResponse(
-          { success: false, message: 'ID card must be an image file' },
-          400
-        );
+    // Validate file types if provided
+    const validateImage = (file, fieldName) => {
+      if (file && file.size > 0 && !file.type.startsWith('image/')) {
+        throw new Error(`${fieldName} must be an image file`);
       }
-      idCardUrl = await saveUploadedFile(idCardFile);
-    }
+    };
 
-    if (licenseFile && licenseFile.size > 0) {
-      if (!licenseFile.type.startsWith('image/')) {
-        return createResponse(
-          { success: false, message: 'License must be an image file' },
-          400
-        );
-      }
-      licenseUrl = await saveUploadedFile(licenseFile);
+    try {
+      validateImage(idCardFile, 'ID card');
+      validateImage(licenseFile, 'License');
+      validateImage(salonImageFile, 'Salon image');
+    } catch (validationError) {
+      return createResponse(
+        { success: false, message: validationError.message },
+        400
+      );
     }
 
     // Hash password
@@ -173,9 +226,9 @@ export async function POST(request) {
       `INSERT INTO salons (
         salon_name, owner_name, email, password_hash, phone_number,
         street_info, city, state, country, postal_code,
-        days, opening_hours, description, id_card, license,
+        days, opening_hours, description, image, id_card, license,
         otp_code, otp_expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         salonData.salon_name,
         salonData.owner_name,
@@ -190,6 +243,7 @@ export async function POST(request) {
         salonData.days,
         salonData.opening_hours,
         salonData.description,
+        imageUrl,
         idCardUrl,
         licenseUrl,
         otp_code,
@@ -197,27 +251,28 @@ export async function POST(request) {
       ]
     );
 
-   
-
     // Get the created salon (without sensitive data)
     const [newSalon] = await query(
       `SELECT 
         id, salon_name, owner_name, email, phone_number,
         street_info, city, state, country, postal_code,
-        days, opening_hours, description, is_verified, active,
+        days, opening_hours, description, image, is_verified, active,
         DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at
       FROM salons WHERE id = ?`,
       [result.insertId]
     );
 
     // Set email cookie for verification
-    cookies().set('email', salonData.email, {
+    const cookieStore = cookies();
+    cookieStore.set('salon_email', salonData.email, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60, // 1 hour
       path: '/',
     });
+
+    // TODO: Send verification email with OTP code
 
     return createResponse(
       { 

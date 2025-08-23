@@ -8,7 +8,7 @@ export async function POST(request) {
     const {  otp } = await request.json();
      const cookieStore = cookies();
      console.log(otp, request.json());
- const email = cookieStore.get('email')?.value
+ const email = cookieStore.get('salon_email')?.value
     if (!email || !otp) {
       return new Response(JSON.stringify({ 
         success: false, 
@@ -50,7 +50,6 @@ export async function POST(request) {
     // Mark as verified
     await query(
       `UPDATE salons SET 
-       is_verified = TRUE, 
        otp_code = NULL, 
        otp_expires_at = NULL 
        WHERE id = ?`,

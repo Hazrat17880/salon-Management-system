@@ -1,8 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { FaChevronLeft, FaChevronRight, FaCheck, FaBuilding, FaUser, FaLock, FaPhone, FaMapMarkerAlt, FaClock, FaIdCard, FaFileAlt } from "react-icons/fa";
+import { 
+  FaChevronLeft, FaChevronRight, FaCheck, FaBuilding, 
+  FaUser, FaLock, FaPhone, FaMapMarkerAlt, FaClock, 
+  FaIdCard, FaFileAlt, FaImage, FaEnvelope, FaGlobeAmericas 
+} from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { getAuthToken } from "@/lib/cookiesAction";
@@ -24,20 +28,51 @@ export default function SalonSignupPage() {
     days: "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday",
     opening_hours: "09:00-18:00",
     description: "",
+    image: null,
     id_card: null,
     license: null
   });
   const [isLoading, setIsLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+  const formRef = useRef(null);
+
+  // Password strength checker
+  const checkPasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength += 1;
+    if (password.match(/[A-Z]/)) strength += 1;
+    if (password.match(/[0-9]/)) strength += 1;
+    if (password.match(/[^A-Za-z0-9]/)) strength += 1;
+    return strength;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Update password strength when password changes
+    if (name === 'password') {
+      setPasswordStrength(checkPasswordStrength(value));
+    }
   };
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
+    
+    if (name === 'image' && files[0]) {
+      // Create preview for profile image
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(files[0]);
+    }
+    
     setFormData(prev => ({ ...prev, [name]: files[0] }));
   };
 
@@ -49,7 +84,7 @@ export default function SalonSignupPage() {
     return /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(phone);
   };
 
-  const nextStep = () => {
+  const validateFormStep = () => {
     let isValid = true;
     let errorMessage = "";
 
@@ -82,6 +117,9 @@ export default function SalonSignupPage() {
         } else if (formData.password !== formData.confirmPassword) {
           isValid = false;
           errorMessage = "Passwords do not match";
+        } else if (passwordStrength < 3) {
+          isValid = false;
+          errorMessage = "Password is too weak";
         }
         break;
       default:
@@ -90,9 +128,13 @@ export default function SalonSignupPage() {
 
     if (!isValid) {
       toast.error(errorMessage);
-      return;
+      return false;
     }
+    return true;
+  };
 
+  const nextStep = () => {
+    if (!validateFormStep()) return;
     setStep(prev => prev + 1);
   };
 
@@ -117,7 +159,7 @@ export default function SalonSignupPage() {
     
     const form = new FormData();
     Object.keys(formData).forEach(key => {
-      if (key === 'id_card' || key === 'license') {
+      if (key === 'image' || key === 'id_card' || key === 'license') {
         if (formData[key]) {
           form.append(key, formData[key]);
         }
@@ -148,12 +190,18 @@ export default function SalonSignupPage() {
     }
   };
 
-  useEffect(()=>{
-    let token = getAuthToken('salon')
-    if(token){
-      router.push('/salon-dashboard/')
+  useEffect(() => {
+    const token = getAuthToken('salon');
+    if (token) {
+      router.push('/salon-dashboard/');
     }
-  },[])
+  }, [router]);
+
+  // Auto-scroll to top on step change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <motion.div 
@@ -161,6 +209,7 @@ export default function SalonSignupPage() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
+        ref={formRef}
       >
         <div className="h-2 bg-gray-200">
           <motion.div
@@ -260,20 +309,7 @@ export default function SalonSignupPage() {
                         required
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       />
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 absolute left-3 top-3.5 text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
+                      <FaEnvelope className="absolute left-3 top-3.5 text-gray-400" />
                     </div>
                   </div>
                 </motion.div>
@@ -361,16 +397,21 @@ export default function SalonSignupPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Country
                       </label>
-                      <select
-                        name="country"
-                        value={formData.country}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                      >
-                        <option value="United States">United States</option>
-                        <option value="Canada">Canada</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          name="country"
+                          value={formData.country}
+                          onChange={handleChange}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition appearance-none"
+                        >
+                          <option value="United States">United States</option>
+                          <option value="Canada">Canada</option>
+                          <option value="United Kingdom">United Kingdom</option>
+                          <option value="Australia">Australia</option>
+                          <option value="Germany">Germany</option>
+                        </select>
+                        <FaGlobeAmericas className="absolute left-3 top-3.5 text-gray-400" />
+                      </div>
                     </div>
 
                     <div>
@@ -402,6 +443,7 @@ export default function SalonSignupPage() {
                       <option value="Monday,Tuesday,Wednesday,Thursday,Friday">Monday - Friday</option>
                       <option value="Tuesday,Wednesday,Thursday,Friday,Saturday">Tuesday - Saturday</option>
                       <option value="Monday,Wednesday,Friday,Saturday">Mon, Wed, Fri, Sat</option>
+                      <option value="Monday,Wednesday,Friday">Mon, Wed, Fri</option>
                     </select>
                   </div>
 
@@ -419,7 +461,8 @@ export default function SalonSignupPage() {
                         <option value="09:00-18:00">9:00 AM - 6:00 PM</option>
                         <option value="10:00-19:00">10:00 AM - 7:00 PM</option>
                         <option value="08:00-17:00">8:00 AM - 5:00 PM</option>
-                        <option value="custom">Custom Hours</option>
+                        <option value="09:00-17:00">9:00 AM - 5:00 PM</option>
+                        <option value="10:00-18:00">10:00 AM - 6:00 PM</option>
                       </select>
                       <FaClock className="absolute left-3 top-3.5 text-gray-400" />
                     </div>
@@ -437,6 +480,41 @@ export default function SalonSignupPage() {
                       rows="3"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Salon Profile Image
+                    </label>
+                    <div className="mt-1 flex items-center">
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          {imagePreview ? (
+                            <img 
+                              src={imagePreview} 
+                              alt="Preview" 
+                              className="h-20 w-20 object-cover rounded-full mb-2"
+                            />
+                          ) : (
+                            <FaImage className="mb-3 text-gray-400 text-2xl" />
+                          )}
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            JPG, PNG (MAX. 5MB)
+                          </p>
+                        </div>
+                        <input
+                          id="image"
+                          name="image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -456,20 +534,105 @@ export default function SalonSignupPage() {
                     </label>
                     <div className="relative">
                       <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="••••••••"
                         required
                         minLength={8}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       />
                       <FaLock className="absolute left-3 top-3.5 text-gray-400" />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Must be at least 8 characters
-                    </p>
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Password Strength:</span>
+                        <span className="text-xs font-medium">
+                          {passwordStrength === 0 && 'Very Weak'}
+                          {passwordStrength === 1 && 'Weak'}
+                          {passwordStrength === 2 && 'Medium'}
+                          {passwordStrength === 3 && 'Strong'}
+                          {passwordStrength === 4 && 'Very Strong'}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                        <div 
+                          className={`h-1.5 rounded-full ${
+                            passwordStrength === 0 ? 'bg-red-500 w-1/4' :
+                            passwordStrength === 1 ? 'bg-orange-500 w-2/4' :
+                            passwordStrength === 2 ? 'bg-yellow-500 w-3/4' :
+                            passwordStrength >= 3 ? 'bg-green-500 w-full' : ''
+                          }`}
+                        ></div>
+                      </div>
+                    </div>
+                    <ul className="mt-2 text-xs text-gray-500 space-y-1">
+                      <li className={`flex items-center ${formData.password.length >= 8 ? 'text-green-500' : ''}`}>
+                        {formData.password.length >= 8 ? (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        )}
+                        At least 8 characters
+                      </li>
+                      <li className={`flex items-center ${formData.password.match(/[A-Z]/) ? 'text-green-500' : ''}`}>
+                        {formData.password.match(/[A-Z]/) ? (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        )}
+                        At least one uppercase letter
+                      </li>
+                      <li className={`flex items-center ${formData.password.match(/[0-9]/) ? 'text-green-500' : ''}`}>
+                        {formData.password.match(/[0-9]/) ? (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        )}
+                        At least one number
+                      </li>
+                      <li className={`flex items-center ${formData.password.match(/[^A-Za-z0-9]/) ? 'text-green-500' : ''}`}>
+                        {formData.password.match(/[^A-Za-z0-9]/) ? (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                          </svg>
+                        )}
+                        At least one special character
+                      </li>
+                    </ul>
                   </div>
 
                   <div>
@@ -478,16 +641,43 @@ export default function SalonSignupPage() {
                     </label>
                     <div className="relative">
                       <input
-                        type="password"
+                        type={showConfirmPassword ? "text" : "password"}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="••••••••"
                         required
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       />
                       <FaLock className="absolute left-3 top-3.5 text-gray-400" />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
+                    {formData.password && formData.confirmPassword && (
+                      <p className={`mt-1 text-xs ${
+                        formData.password === formData.confirmPassword ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {formData.password === formData.confirmPassword ? (
+                          'Passwords match'
+                        ) : (
+                          'Passwords do not match'
+                        )}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -682,7 +872,7 @@ export default function SalonSignupPage() {
 
           <div className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{' '}
-            <Link href="/salon/login" className="text-blue-600 hover:underline">
+            <Link href="/salon/signin" className="text-blue-600 hover:underline">
               Login here
             </Link>
           </div>

@@ -5,7 +5,7 @@ import { query } from '@/lib/dbConnection';
 export async function authUsers() {
   try {
     // Get token from cookies
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get('usertoken')?.value;
 
     if (!token) {
@@ -17,7 +17,6 @@ export async function authUsers() {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     // Check if the token has user role
     if (decoded.role !== 'user') {
       return { 
@@ -41,6 +40,7 @@ export async function authUsers() {
 
     // Check if user is verified
     if (!user.is_verified) {
+
       return { 
         isAuthenticated: false, 
         message: 'User not verified' 

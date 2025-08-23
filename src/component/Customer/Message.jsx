@@ -1,304 +1,281 @@
 "use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { useState } from "react";
-import { FiSend, FiChevronLeft, FiPaperclip, FiChevronDown } from "react-icons/fi";
+import { Send, MessageSquare, Trash2, X } from "lucide-react";
+import { toast } from "react-toastify";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-const MessagesContent = ({ initialMessages = [], salons = [] }) => {
-  const [selectedMessage, setSelectedMessage] = useState(null);
-  const [newMessageText, setNewMessageText] = useState("");
-  const [isComposing, setIsComposing] = useState(false);
-  const [recipient, setRecipient] = useState("");
-  const [messages, setMessages] = useState(initialMessages);
-  const [showSalonDropdown, setShowSalonDropdown] = useState(false);
-  const [recipientType, setRecipientType] = useState(""); // 'admin' or 'salon'
-  const [selectedSalon, setSelectedSalon] = useState("");
+export default function Conversations() {
+  const [conversations, setConversations] = useState([]);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const messagesEndRef = useRef(null);
+  const router = useRouter();
+  
+  // ✅ Scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
-  const handleNewMessage = () => {
-    setIsComposing(true);
-    setSelectedMessage(null);
-    setRecipientType("");
-    setSelectedSalon("");
-    setRecipient("");
-  };
-
-  const handleMessageClick = (message) => {
-    setSelectedMessage(message);
-    setIsComposing(false);
-    
-    if (message.unread) {
-      setMessages(messages.map(msg => 
-        msg.id === message.id ? {...msg, unread: false} : msg
-      ));
-    }
-  };
-
-  const handleSendMessage = () => {
-    if (!newMessageText.trim() || !recipient) return;
-    
-    const newMsg = {
-      id: messages.length + 1,
-      salon: recipient,
-      message: newMessageText,
-      time: "Just now",
-      unread: false,
-      sender: "You",
+  // ✅ Fetch all conversations
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await fetch("/api/user/chats");
+        if (res.status === 401) {
+          localStorage.clear();
+          toast.info("Your session has expired.");
+          return router.push('/user/signin')
+        }
+       
+        const data = await res.json();
+        console.log(data, 'the data is');
+        if (data.success) setConversations(data.data);
+      } catch (err) {
+        console.error("Error fetching conversations:", err);
+        toast.error("Failed to load conversations.");
+      }
     };
-    
-    setMessages([newMsg, ...messages]);
-    setNewMessageText("");
-    setRecipient("");
-    setIsComposing(false);
-    setShowSalonDropdown(false);
-    setRecipientType("");
-    setSelectedSalon("");
+    fetchConversations();
+  }, []);
+
+  // ✅ Fetch messages for a conversation
+  const fetchMessages = useCallback(async (conversationId) => {
+    try {
+      const res = await fetch(`/api/user/chats/messages?conversation_id=${conversationId}`);
+      const data = await res.json();
+      if (data.success) setMessages(data.data);
+      scrollToBottom();
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+      toast.error("Failed to load messages.");
+    }
+  }, [scrollToBottom]);
+
+  // ✅ Select a conversation
+  const handleSelectConversation = (conv) => {
+    setSelectedConversation(conv);
+    fetchMessages(conv.conversation_id);
   };
 
-  const handleBackToList = () => {
-    setSelectedMessage(null);
-    setIsComposing(false);
-  };
-
-  const selectSalon = (salonName) => {
-    setSelectedSalon(salonName);
-    setRecipient(salonName);
-    setShowSalonDropdown(false);
-  };
-
-  const handleRecipientTypeChange = (type) => {
-    setRecipientType(type);
-    if (type === "admin") {
-      setRecipient("Admin");
-      setSelectedSalon("");
-    } else {
-      setRecipient("");
+  // ✅ Send new message
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation) return;
+    setLoading(true);
+    console.log(selectedConversation, 'the conversition is ');
+    try {
+      const res = await fetch("/api/user/chats/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: selectedConversation.conversation_id,
+          message: newMessage,
+          salonId: selectedConversation.salon_id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewMessage("");
+        fetchMessages(selectedConversation.conversation_id);
+      } else {
+        toast.error("Failed to send message.");
+      }
+    } catch (err) {
+      console.error("Error sending message:", err);
+      toast.error("Failed to send message.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Function to show delete confirmation
+  const confirmDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  // Function to cancel delete
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  // Function to delete a conversation
+  const deleteConversation = async () => {
+    try {
+      const res = await fetch(`/api/user/chats/messages/?conversation_id=${selectedConversation.conversation_id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(res);
+      const data = await res.json();
+      console.log(data, 'the data is');
+      if (data.success) {
+        toast.success("Conversation deleted successfully!");
+        // Remove the deleted conversation from state
+        setConversations(conversations.filter(conv => conv.conversation_id !== selectedConversation.conversation_id));
+        setSelectedConversation(null);
+        setMessages([]);
+      } else {
+        toast.error("Failed to delete conversation: " + data.message);
+      }
+    } catch (error) {
+      toast.error("Something went wrong while deleting the conversation.");
+    } finally {
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  // ✅ Auto-scroll on new messages
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   return (
-    <div className="bg-white p-4 md:p-6 rounded-lg md:rounded-xl shadow-sm h-full flex flex-col">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6">
-        {selectedMessage || isComposing ? (
-          <div className="flex items-center">
-            <button 
-              onClick={handleBackToList}
-              className="mr-2 p-1 rounded-full hover:bg-gray-100"
-            >
-              <FiChevronLeft className="h-5 w-5 text-gray-600" />
-            </button>
-            <h3 className="text-lg md:text-xl font-semibold text-gray-800">
-              {isComposing ? "New Message" : selectedMessage?.salon || ""}
-            </h3>
-          </div>
+    <div className="flex h-[85vh] rounded-2xl overflow-hidden shadow-lg border bg-white">
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full mx-4"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Confirm Delete</h3>
+              <button onClick={cancelDelete} className="text-gray-500 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="mb-6 text-gray-600">
+              Are you sure you want to delete this conversation? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteConversation}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Conversations Sidebar */}
+      <div className="w-1/3 border-r bg-gray-50 p-4 overflow-y-auto">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-blue-500" /> Conversations
+        </h2>
+
+        {conversations.length === 0 ? (
+          <p className="text-gray-500 text-center">No conversations found</p>
         ) : (
-          <>
-            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-0">
-              Messages
-            </h3>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleNewMessage}
-              className="px-3 py-1 md:px-4 md:py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm md:text-base transition-colors"
+          conversations.map((conv) => (
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              key={conv.conversation_id}
+              onClick={() => handleSelectConversation(conv)}
+              className={`flex items-center gap-3 cursor-pointer p-3 mb-2 rounded-xl shadow-sm transition ${selectedConversation?.conversation_id === conv.conversation_id
+                ? "bg-blue-100 border border-blue-400"
+                : "bg-white hover:bg-gray-100"
+                }`}
             >
-              New Message
-            </motion.button>
-          </>
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 bg-gray-100 flex items-center justify-center">
+                <Image
+                  src={conv.salon_image || "/default-avatar.png"}
+                  alt={conv.salon_name || conv.user_name || "Conversation"}
+                  width={40}
+                  height={40}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+
+              <div className="flex flex-col flex-1 min-w-0">
+                <p className="font-medium text-gray-800 truncate">
+                  {conv.salon_name || conv.user_name}
+                </p>
+                {/* <p className="text-xs text-gray-500 truncate">
+                  Last: {conv.last_message || "No messages yet"}
+                </p> */}
+              </div>
+            </motion.div>
+          ))
         )}
       </div>
-      
-      {/* Message List View */}
-      {!selectedMessage && !isComposing && (
-        <div className="flex-1 overflow-y-auto">
-          {messages && messages.length > 0 ? (
-            <div className="space-y-3 md:space-y-4">
-              {messages.map(message => (
-                <motion.div
-                  key={message.id}
-                  whileHover={{ y: -2 }}
-                  onClick={() => handleMessageClick(message)}
-                  className={`p-3 md:p-4 border rounded-lg cursor-pointer transition-all ${
-                    message.unread 
-                      ? 'border-indigo-300 bg-indigo-50' 
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-start">
-                    <div className="mb-2 md:mb-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900 text-sm md:text-base">
-                          {message.salon}
-                        </h4>
-                        <div className="flex items-center">
-                          <span className="text-xs text-gray-500 mr-2">
-                            {message.time}
-                          </span>
-                          {message.unread && (
-                            <span className="inline-block h-2 w-2 rounded-full bg-indigo-600"></span>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-gray-600 mt-1 text-sm md:text-base line-clamp-2">
-                        {message.message}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+
+      {/* Chat Section */}
+      <div className="w-2/3 flex flex-col">
+        {selectedConversation ? (
+          <>
+            {/* Chat Header */}
+            <div className="p-4 border-b flex justify-between items-center bg-gray-100">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {selectedConversation.salon_name || selectedConversation.user_name}
+              </h3>
+              <button onClick={confirmDelete} className="text-red-500 hover:text-red-700 flex items-center gap-1">
+                <Trash2 className="w-4 h-4" /> Delete
+              </button>
             </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center py-8 text-gray-500">
-              <p className="mb-4">No messages found</p>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleNewMessage}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm md:text-base transition-colors"
+
+            {/* Messages */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50">
+              {messages.length === 0 ? (
+                <p className="text-gray-500 text-center mt-10">No messages yet</p>
+              ) : (
+                messages.map((msg, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`max-w-[70%] p-3 rounded-xl ${msg.sender_type === "salon"
+                      ? "ml-auto bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-800"
+                      }`}
+                  >
+                    {msg.message}
+                  </motion.div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input Box */}
+            <div className="p-3 border-t bg-white flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-1 border rounded-full px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={loading}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full flex items-center gap-1 disabled:opacity-50"
               >
-                Start a Conversation
-              </motion.button>
+                <Send className="w-4 h-4" /> Send
+              </button>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Message Detail View */}
-      {selectedMessage && !isComposing && (
-        <div className="flex-1 flex flex-col">
-          <div className="border-b pb-4 mb-4">
-            <h4 className="font-medium text-gray-900 text-lg">
-              {selectedMessage.salon}
-            </h4>
-            <p className="text-gray-500 text-sm">
-              {selectedMessage.time}
-            </p>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            Select a conversation to start chatting
           </div>
-          
-          <div className="flex-1 overflow-y-auto mb-4 p-2 bg-gray-50 rounded-lg">
-            <div className={`p-3 mb-3 rounded-lg max-w-[80%] ${
-              selectedMessage.sender === "You" 
-                ? 'bg-indigo-100 ml-auto' 
-                : 'bg-white mr-auto'
-            }`}>
-              <p className="text-gray-800">{selectedMessage.message}</p>
-            </div>
-            
-            <div className="p-3 mb-3 rounded-lg max-w-[80%] bg-white">
-              <p className="text-gray-800">Thanks for your message! We'll get back to you shortly.</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center border-t pt-4">
-            <input
-              type="text"
-              placeholder="Type your reply..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-indigo-500 focus:border-indigo-500"
-            />
-            <button className="p-2 text-gray-500 hover:text-gray-700 border border-l-0 border-gray-300">
-              <FiPaperclip />
-            </button>
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-r-lg hover:bg-indigo-700">
-              <FiSend />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* New Message Composition View */}
-      {isComposing && (
-        <div className="flex-1 flex flex-col">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Recipient Type:
-            </label>
-            <div className="flex space-x-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  className="form-radio h-4 w-4 text-indigo-600"
-                  checked={recipientType === "admin"}
-                  onChange={() => handleRecipientTypeChange("admin")}
-                />
-                <span className="ml-2 text-gray-700">Admin Panel</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  className="form-radio h-4 w-4 text-indigo-600"
-                  checked={recipientType === "salon"}
-                  onChange={() => handleRecipientTypeChange("salon")}
-                />
-                <span className="ml-2 text-gray-700">Salon</span>
-              </label>
-            </div>
-          </div>
-
-          {recipientType === "salon" && (
-            <div className="mb-4 relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Select Salon:
-              </label>
-              <div className="relative">
-                <button
-                  onClick={() => setShowSalonDropdown(!showSalonDropdown)}
-                  className="w-full flex justify-between items-center px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white"
-                >
-                  <span>{selectedSalon || "Select a salon"}</span>
-                  <FiChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${showSalonDropdown ? 'transform rotate-180' : ''}`} />
-                </button>
-                {showSalonDropdown && (
-                  <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 border border-gray-200 max-h-60 overflow-auto">
-                    {salons.map(salon => (
-                      <button
-                        key={salon.id}
-                        onClick={() => selectSalon(salon.name)}
-                        className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                      >
-                        {salon.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div className="flex-1 mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Message:
-            </label>
-            <textarea
-              placeholder="Type your message here..."
-              value={newMessageText}
-              onChange={(e) => setNewMessageText(e.target.value)}
-              className="w-full h-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-              rows="8"
-            />
-          </div>
-          
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={() => setIsComposing(false)}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSendMessage}
-              disabled={!newMessageText.trim() || !recipient}
-              className={`px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 ${
-                (!newMessageText.trim() || !recipient) ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              Send Message
-            </motion.button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
-};
-
-export default MessagesContent;
+}

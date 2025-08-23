@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS users (
   otp_expires_at DATETIME,
   is_verified BOOLEAN DEFAULT FALSE,
   active BOOLEAN DEFAULT FALSE,
-
+  image VARCHAR(255),
   description VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -118,21 +118,66 @@ CREATE TABLE IF NOT EXISTS favorite_salon (
 );
 
   `)
+  // APPOINTEMENT 
   await query(`
 CREATE TABLE IF NOT EXISTS appointment (
     id INT AUTO_INCREMENT PRIMARY KEY,
     salon_id INT NOT NULL,
     user_id INT NOT NULL,
     services_id INT NOT NULL,
+    appointment_date DATE NOT NULL,
+    appointment_time TIME NOT NULL,
+    accept BOOLEAN DEFAULT false,
+    appointment_status ENUM('pending', 'completed', 'rejected', 'accept') DEFAULT 'pending',
+    user_view BOOLEAN default false,
+    salon_view BOOLEAN default false,
     FOREIGN KEY (services_id) REFERENCES salon_services(id) ON DELETE CASCADE,
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-
 );
 
   `)
 
+// converstion
+await query(`
+  CREATE TABLE IF NOT EXISTS conversations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  salon_id INT NOT NULL,
+  user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);`)
 
+await query(`
+  CREATE TABLE IF NOT EXISTS messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  conversation_id INT NOT NULL,
+  sender_type ENUM('user', 'salon') NOT NULL,
+  message TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+);`)
+
+await query(`
+CREATE TABLE IF NOT EXISTS complaints (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  complaint_about ENUM('salon', 'services') NOT NULL,
+  description TEXT NOT NULL,
+  salon_id INT NOT NULL,
+  user_id INT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX (salon_id),
+  INDEX (user_id),
+  INDEX (is_read)
+);
+`)
     console.log('Database initialized');
   } catch (error) {
     console.error('Database initialization failed:', error);

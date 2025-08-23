@@ -6,7 +6,7 @@ export async function authSalons() {
   try {
     // Get token from cookies
     const cookieStore = cookies();
-    const token = cookieStore.get('salonstoken')?.value;
+    const token = await cookieStore.get('salonstoken')?.value;
 
     if (!token) {
       return { 
@@ -40,12 +40,12 @@ export async function authSalons() {
     }
 
     // Check if salon is verified
-    if (!salon.is_verified) {
-      return { 
-        isAuthenticated: false, 
-        message: 'Salon not verified' 
-      };
-    }
+    // if (!salon.is_verified) {
+    //   return { 
+    //     isAuthenticated: false, 
+    //     message: 'Salon not verified' 
+    //   };
+    // }
 
     return {
       isAuthenticated: true,

@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import { FaCut } from "react-icons/fa";
 import { useState } from "react";
+import useLogout from "../hooks/UserLogout";
 
 export default function UserSidebar({
   unreadNotifications,
@@ -38,6 +39,7 @@ export default function UserSidebar({
     { label: "Complaints", icon: <FiSettings size={20} />, href: "/user-dashboard/complaints" },
   ];
 
+  const logout = useLogout();
   return (
     <>
       {/* Logout Confirmation */}
@@ -112,7 +114,7 @@ export default function UserSidebar({
 
         <div className="p-4">
           <button
-            onClick={handleLogout}
+            onClick={logout}
             className="flex items-center w-full p-3 text-indigo-200 hover:text-white hover:bg-indigo-700 rounded-lg transition"
           >
             <FiLogOut size={20} className="mr-3" />

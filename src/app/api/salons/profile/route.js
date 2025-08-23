@@ -3,9 +3,18 @@ import { query } from '@/lib/dbConnection';
 import { deleteOldImage, saveUploadedFile } from '@/middleware/ImageSaveDelete';
 import path from 'path';
 
-// Configure upload directory
+// Configure upload directories
 const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/salons');
 const UPLOAD_PATH_PREFIX = '/uploads/salons/';
+
+// File validation constants
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf'
+];
 
 // Helper function to create consistent responses
 function createResponse({ success, message, data = null, status = 200 }) {
@@ -15,6 +24,21 @@ function createResponse({ success, message, data = null, status = 200 }) {
   });
 }
 
+// Validate uploaded files
+const validateFile = (file) => {
+  if (!file || file.size === 0) return null;
+  
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error('File size exceeds 5MB limit');
+  }
+  
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    throw new Error('Invalid file type. Only JPG, PNG, WEBP, or PDF allowed');
+  }
+  
+  return true;
+};
+
 // GET - Get salon profile
 const getProfileHandler = async (request) => {
   try {
@@ -22,7 +46,8 @@ const getProfileHandler = async (request) => {
       `SELECT 
         id, salon_name, owner_name, email, phone_number,
         street_info, city, state, country, postal_code,
-        days, opening_hours, description, is_verified, active, license, id_card,
+        days, opening_hours, description, image,
+        is_verified, active, license, id_card,
         DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,
         DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
       FROM salons WHERE id = ?`,
@@ -37,10 +62,13 @@ const getProfileHandler = async (request) => {
       });
     }
 
+    // Sanitize sensitive data
+    const { password_hash, otp_code, otp_expires_at, ...sanitizedSalon } = salon;
+
     return createResponse({
       success: true,
       message: 'Salon profile retrieved successfully',
-      data: salon
+      data: sanitizedSalon
     });
   } catch (error) {
     console.error('Error fetching salon profile:', error);
@@ -60,7 +88,7 @@ const updateProfileHandler = async (request) => {
     
     // Get current salon data to check for existing files
     const [currentSalon] = await query(
-      'SELECT id_card, license FROM salons WHERE id = ?',
+      'SELECT image, id_card, license FROM salons WHERE id = ?',
       [request.salon.id]
     );
     
@@ -88,40 +116,53 @@ const updateProfileHandler = async (request) => {
     };
 
     // Handle file uploads
+    const imageFile = formData.get('profile_image');
     const idCardFile = formData.get('id_card');
     const licenseFile = formData.get('license');
 
-    if (idCardFile && idCardFile.size > 0) {
-      if (!idCardFile.type.startsWith('image/') && !idCardFile.type.includes('pdf')) {
-        return createResponse({
-          success: false,
-          message: 'ID card must be an image or PDF file',
-          status: 400
-        });
+    try {
+      // Process profile image
+      if (imageFile && imageFile.size > 0) {
+        validateFile(imageFile);
+        if (currentSalon.image) {
+          await deleteOldImage(currentSalon.image, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+        }
+        updateData.image = await saveUploadedFile(imageFile, UPLOAD_DIR, UPLOAD_PATH_PREFIX);
       }
-      // Delete old file if exists
-      if (currentSalon.id_card) {
-        await deleteOldImage(currentSalon.id_card, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
-      }
-      updateData.id_card = await saveUploadedFile(idCardFile, UPLOAD_DIR, UPLOAD_PATH_PREFIX);
-    }
 
-    if (licenseFile && licenseFile.size > 0) {
-      if (!licenseFile.type.startsWith('image/') && !licenseFile.type.includes('pdf')) {
-        return createResponse({
-          success: false,
-          message: 'License must be an image or PDF file',
-          status: 400
-        });
+      // Process ID card
+      if (idCardFile && idCardFile.size > 0) {
+        validateFile(idCardFile);
+        if (currentSalon.id_card) {
+          await deleteOldImage(currentSalon.id_card, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+        }
+        updateData.id_card = await saveUploadedFile(idCardFile, UPLOAD_DIR, UPLOAD_PATH_PREFIX);
       }
-      // Delete old file if exists
-      if (currentSalon.license) {
-        await deleteOldImage(currentSalon.license, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+
+      // Process license
+      if (licenseFile && licenseFile.size > 0) {
+        validateFile(licenseFile);
+        if (currentSalon.license) {
+          await deleteOldImage(currentSalon.license, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+        }
+        updateData.license = await saveUploadedFile(licenseFile, UPLOAD_DIR, UPLOAD_PATH_PREFIX);
       }
-      updateData.license = await saveUploadedFile(licenseFile, UPLOAD_DIR, UPLOAD_PATH_PREFIX);
+    } catch (fileError) {
+      return createResponse({
+        success: false,
+        message: fileError.message,
+        status: 400
+      });
     }
 
     // Handle explicit file removal
+    if (formData.get('remove_image') === 'true') {
+      if (currentSalon.image) {
+        await deleteOldImage(currentSalon.image, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
+      }
+      updateData.image = null;
+    }
+
     if (formData.get('remove_id_card') === 'true') {
       if (currentSalon.id_card) {
         await deleteOldImage(currentSalon.id_card, UPLOAD_PATH_PREFIX, UPLOAD_DIR);
@@ -136,9 +177,35 @@ const updateProfileHandler = async (request) => {
       updateData.license = null;
     }
 
+    // Validate required fields
+    const requiredFields = {
+      salon_name: 'Salon name is required',
+      owner_name: 'Owner name is required',
+      phone_number: 'Phone number is required',
+      street_info: 'Street address is required',
+      city: 'City is required',
+      state: 'State is required'
+    };
+
+    const missingFields = [];
+    for (const [field, message] of Object.entries(requiredFields)) {
+      if (!updateData[field] && !formData.get(field)) {
+        missingFields.push(message);
+      }
+    }
+
+    if (missingFields.length > 0) {
+      return createResponse({
+        success: false,
+        message: missingFields.join(', '),
+        status: 400
+      });
+    }
+
     // Build SQL update query
     const updateFields = [];
     const params = [];
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     
     for (const [field, value] of Object.entries(updateData)) {
       if (value !== null && value !== undefined) {
@@ -146,6 +213,10 @@ const updateProfileHandler = async (request) => {
         params.push(value);
       }
     }
+
+    // Always update the updated_at timestamp
+    updateFields.push('updated_at = ?');
+    params.push(now);
 
     if (updateFields.length === 0) {
       return createResponse({
@@ -164,17 +235,21 @@ const updateProfileHandler = async (request) => {
       `SELECT 
         id, salon_name, owner_name, email, phone_number,
         street_info, city, state, country, postal_code,
-        days, opening_hours, description, is_verified, active,
+        days, opening_hours, description, image,
+        is_verified, active, license, id_card,
         DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,
         DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
       FROM salons WHERE id = ?`,
       [request.salon.id]
     );
 
+    // Sanitize sensitive data
+    const { password_hash, otp_code, otp_expires_at, ...sanitizedSalon } = updatedSalon;
+
     return createResponse({
       success: true,
       message: 'Profile updated successfully',
-      data: updatedSalon
+      data: sanitizedSalon
     });
   } catch (error) {
     console.error('Error updating salon profile:', error);
