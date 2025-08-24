@@ -3,11 +3,9 @@
 import { motion } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  FiHome,
   FiUser,
   FiCalendar,
   FiMessageSquare,
-  FiBell,
   FiSettings,
   FiLogOut,
 } from "react-icons/fi";
@@ -28,18 +26,16 @@ export default function UserSidebar({
   const confirmLogout = () => router.push("/login");
   const cancelLogout = () => setShowLogoutConfirm(false);
 
-  // Navigation links
   const navLinks = [
-    { label: "Dashboard", icon: <FiHome size={20} />, href: "/user-dashboard/" },
     { label: "My Profile", icon: <FiUser size={20} />, href: "/user-dashboard/profile" },
     { label: "Appointments", icon: <FiCalendar size={20} />, href: "/user-dashboard/appointments" },
     { label: "Find Salons", icon: <FaCut size={20} />, href: "/user-dashboard/salons" },
     { label: "Messages", icon: <FiMessageSquare size={20} />, href: "/user-dashboard/messages", badge: messages.filter(m => m.unread).length },
-    { label: "Notifications", icon: <FiBell size={20} />, href: "/user-dashboard/notifications", badge: unreadNotifications },
     { label: "Complaints", icon: <FiSettings size={20} />, href: "/user-dashboard/complaints" },
   ];
 
   const logout = useLogout();
+
   return (
     <>
       {/* Logout Confirmation */}
@@ -84,7 +80,8 @@ export default function UserSidebar({
           <p className="text-indigo-200 text-sm">Customer Dashboard</p>
         </div>
 
-        <nav className="mt-4 md:mt-8 flex-1">
+        {/* Nav links */}
+        <nav className="mt-2 md:mt-3 flex-1">
           {navLinks.map((item, idx) => {
             const isActive = pathname === item.href;
             return (
@@ -94,7 +91,7 @@ export default function UserSidebar({
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   router.push(item.href);
-                  setMobileMenuOpen(false); // close on mobile
+                  setMobileMenuOpen(false);
                 }}
                 className={`flex items-center px-4 py-3 md:px-6 cursor-pointer transition ${
                   isActive ? "bg-indigo-700" : "hover:bg-indigo-700/50"
@@ -112,6 +109,7 @@ export default function UserSidebar({
           })}
         </nav>
 
+        {/* Logout at the bottom */}
         <div className="p-4">
           <button
             onClick={logout}

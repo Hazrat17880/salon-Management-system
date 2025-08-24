@@ -6,8 +6,15 @@ import { FaArrowLeft, FaCheckCircle, FaRegClock } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { setAuthToken } from "@/lib/cookiesAction";
+import { useSearchParams } from "next/navigation";
+
 
 export default function UserOTPVerification() {
+    const searchParams = useSearchParams();
+  const purpose = searchParams.get("purpose"); // "forgot"
+  const role = searchParams.get("role");       // e.g. "user" or "staff"
+
+
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
@@ -78,6 +85,9 @@ export default function UserOTPVerification() {
       setIsVerified(true);
       toast.success('Your account has been verified successfully!');
       setAuthToken('user')
+      
+      // cehcking for type and redirect according to that 
+      purpose==="forgot" ? router.push(`/reset-password?role=${role}`) :
       router.push("/user-dashboard");
 
     } catch (err) {

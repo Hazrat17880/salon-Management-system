@@ -19,7 +19,7 @@ export default function UserLoginPage() {
   const router = useRouter();
 
   const handleForgotPassword = () => {
-    router.push(`/forgot-password?role=user`);
+    router.push(`/user/forgot?role=user`);
   };
 
   const handleLogin = async (e) => {

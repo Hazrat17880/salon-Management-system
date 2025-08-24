@@ -5,10 +5,16 @@ import { cookies } from 'next/headers';
 // POST - Verify salon with OTP and set auth cookie
 export async function POST(request) {
   try {
-    const {  otp } = await request.json();
-     const cookieStore = cookies();
-     console.log(otp, request.json());
- const email = cookieStore.get('salon_email')?.value
+    // Parse body once
+    const body = await request.json();
+    const otp = body.otp;
+
+    const cookieStore = cookies();
+    const email = cookieStore.get('salon_email')?.value;
+
+    console.log("OTP from request:", otp);
+    console.log("Email from cookie:", email);
+
     if (!email || !otp) {
       return new Response(JSON.stringify({ 
         success: false, 
@@ -58,21 +64,17 @@ export async function POST(request) {
 
     // Create JWT token
     const token = jwt.sign(
-      { 
-        id: salon.id, 
-        email: salon.email,
-        role: 'salon' 
-      },
+      { id: salon.id, email: salon.email, role: 'salon' },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // Set cookie
+    // Set auth cookie
     cookies().set('salonstoken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 , // 7 days
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });
 
@@ -88,6 +90,7 @@ export async function POST(request) {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
+
   } catch (error) {
     console.error('Verification error:', error);
     return new Response(JSON.stringify({ 

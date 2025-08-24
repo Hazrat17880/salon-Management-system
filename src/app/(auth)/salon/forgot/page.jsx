@@ -23,7 +23,7 @@ export default function ForgotPassword() {
     try {
       // API endpoint based on user type
       const endpoint = userType === "salon" 
-        ? "/api/auth/salon/forgot-password" 
+        ? "/api/auth/salons/forgot-password" 
         : "/api/auth/client/forgot-password";
 
       const response = await fetch(endpoint, {
@@ -41,6 +41,10 @@ export default function ForgotPassword() {
       }
 
       setEmailSent(true);
+      localStorage.setItem("email", email); // ✅ save email
+            router.push(`/salon/otp-verification?purpose=forgot&role=salon`);
+
+
     } catch (err) {
       setError(err.message);
     } finally {

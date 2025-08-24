@@ -29,7 +29,6 @@ export default function CustomerLayout({ children }) {
 
   return (
     <div className="bg-gray-50 h-screen flex flex-col">
-      
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
@@ -58,14 +57,13 @@ export default function CustomerLayout({ children }) {
             mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-         <UserSidebar
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-  unreadNotifications={unreadNotifications}
-  messages={messages}
-  setMobileMenuOpen={setMobileMenuOpen} // ✅ Add this
-/>
-
+          <UserSidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            unreadNotifications={unreadNotifications}
+            messages={messages}
+            setMobileMenuOpen={setMobileMenuOpen} // ✅ Add this
+          />
         </aside>
 
         {/* Main Content */}

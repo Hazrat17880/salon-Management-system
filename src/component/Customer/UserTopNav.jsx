@@ -2,6 +2,7 @@
 
 import { FiBell, FiMenu, FiX } from "react-icons/fi";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function UserTopNav({
   activeTab,
@@ -10,6 +11,12 @@ export default function UserTopNav({
   unreadNotifications,
   profileData,
 }) {
+  const router = useRouter();
+
+  const handleNotificationClick = () => {
+    router.push("/user-dashboard/notifications");
+  };
+
   return (
     <>
       {/* Mobile Header */}
@@ -24,7 +31,10 @@ export default function UserTopNav({
           {activeTab.replace(/-/g, " ")}
         </h2>
         <div className="flex items-center space-x-4">
-          <div className="relative">
+          <div
+            className="relative cursor-pointer"
+            onClick={handleNotificationClick}
+          >
             <FiBell size={22} className="text-gray-600" />
             {unreadNotifications > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -38,7 +48,10 @@ export default function UserTopNav({
       {/* Desktop Header */}
       <header className="hidden md:flex bg-white shadow-sm p-4 justify-end items-center">
         <div className="flex items-center space-x-4">
-          <div className="relative">
+          <div
+            className="relative cursor-pointer"
+            onClick={handleNotificationClick}
+          >
             <FiBell size={22} className="text-gray-600" />
             {unreadNotifications > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">

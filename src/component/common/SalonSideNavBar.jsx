@@ -23,7 +23,7 @@ export default function SalonsSideBar() {
   const menuItems = [
     { id: "dashboard", icon: <RiDashboardFill size={20} />, label: "Dashboard", href: "/salon-dashboard/" },
     { id: "appointments", icon: <FiCalendar size={20} />, label: "Appointments", href: "/salon-dashboard/appointments" },
-    { id: "customers", icon: <FiUsers size={20} />, label: "Customers", href: "/salon-dashboard/customers" },
+    // { id: "customers", icon: <FiUsers size={20} />, label: "Customers", href: "/salon-dashboard/customers" },
     { id: "services", icon: <FiSettings size={20} />, label: "Services", href: "/salon-dashboard/services" },
     { id: "messages", icon: <MessageSquare size={20} />, label: "Messages", href: "/salon-dashboard/messages" },
 

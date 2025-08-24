@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Cookies from "js-cookie";
 
 export default function ForgotPassword() {
   const searchParams = useSearchParams();
@@ -13,7 +14,7 @@ export default function ForgotPassword() {
   const [error, setError] = useState(null);
 
   // Get role from URL params (default to client)
-  const userType = searchParams.get("role") || "client";
+  const userType = searchParams.get("role") || "user";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,26 +22,35 @@ export default function ForgotPassword() {
     setError(null);
 
     try {
-      // API endpoint based on user type
-      const endpoint = userType === "salon" 
-        ? "/api/auth/salon/forgot-password" 
-        : "/api/auth/client/forgot-password";
+      const endpoint =
+        userType === "salon"
+          ? "/api/auth/salon/forgot-password"
+          : "/api/auth/user/forgot-password";
 
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
-
+      // Try to parse JSON safely
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
       if (!response.ok) {
-        throw new Error(data.message || "Failed to send reset link");
+        console.error("Reset password API failed:", response.status, data);
+        throw new Error(
+          data.message || `Error ${response.status}: Failed to send reset link`
+        );
       }
 
       setEmailSent(true);
+
+      localStorage.setItem("email", email); // ✅ save email
+      router.push(`/user/otp-verification?purpose=forgot&role=${userType}`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -51,36 +61,36 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4 relative overflow-hidden pt-16">
       {/* Background animations */}
-      <motion.div 
+      <motion.div
         className="absolute h-[600px] w-[600px] bg-gradient-to-br from-purple-400/20 to-blue-400/20 rounded-full blur-3xl"
         animate={{
           x: [0, 100, 0],
           y: [0, -50, 0],
-          rotate: [0, 5, 0]
+          rotate: [0, 5, 0],
         }}
         transition={{
           duration: 20,
           repeat: Infinity,
-          repeatType: "reverse"
+          repeatType: "reverse",
         }}
       />
-      
-      <motion.div 
+
+      <motion.div
         className="absolute h-[500px] w-[500px] bg-gradient-to-br from-pink-400/20 to-indigo-400/20 rounded-full blur-3xl right-10 bottom-10"
         animate={{
           x: [0, -80, 0],
           y: [0, 60, 0],
-          rotate: [0, -5, 0]
+          rotate: [0, -5, 0],
         }}
         transition={{
           duration: 25,
           repeat: Infinity,
           repeatType: "reverse",
-          delay: 5
+          delay: 5,
         }}
       />
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -93,17 +103,30 @@ export default function ForgotPassword() {
             transition={{ type: "spring", stiffness: 300, damping: 10 }}
           >
             <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             </div>
           </motion.div>
           <h2 className="text-3xl font-bold text-gray-800 mb-1">
-            {emailSent ? "Check Your Email" : `Reset ${userType === "salon" ? "Salon" : "Client"} Password`}
+            {emailSent
+              ? "Check Your Email"
+              : `Reset ${userType === "salon" ? "Salon" : "Client"} Password`}
           </h2>
           <p className="text-gray-500">
-            {emailSent 
-              ? `We've sent a password reset link to your ${userType} account email` 
+            {emailSent
+              ? `We've sent a password reset link to your ${userType} account email`
               : `Enter your ${userType} account email to reset password`}
           </p>
         </div>
@@ -124,7 +147,11 @@ export default function ForgotPassword() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={userType === "salon" ? "salon@example.com" : "client@example.com"}
+                placeholder={
+                  userType === "salon"
+                    ? "salon@example.com"
+                    : "client@example.com"
+                }
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
@@ -133,14 +160,32 @@ export default function ForgotPassword() {
             <motion.button
               type="submit"
               whileTap={{ scale: 0.98 }}
-              className={`w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition ${isLoading ? 'opacity-80 cursor-not-allowed' : ''}`}
+              className={`w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition ${
+                isLoading ? "opacity-80 cursor-not-allowed" : ""
+              }`}
               disabled={isLoading}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Sending...
                 </div>
@@ -171,11 +216,11 @@ export default function ForgotPassword() {
         )}
 
         <div className="mt-8 text-center text-sm text-gray-500">
-          <Link 
-            href={`/signin`} 
+          <Link
+            href={`/signin`}
             className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
           >
-            Back to  Sign in
+            Back to Sign in
           </Link>
         </div>
       </motion.div>
