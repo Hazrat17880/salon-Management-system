@@ -8,9 +8,10 @@ export async function POST(request) {
     // Parse body once
     const body = await request.json();
     const otp = body.otp;
+    const email = body.email;
 
     const cookieStore = cookies();
-    const email = cookieStore.get('salon_email')?.value;
+    // const email = cookieStore.get('salon_email')?.value;
 
     console.log("OTP from request:", otp);
     console.log("Email from cookie:", email);

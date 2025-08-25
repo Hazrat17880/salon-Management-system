@@ -11,24 +11,33 @@ export default function OTPVerification() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
   const inputsRef = useRef([]);
+  const [email, setEmail] = useState("");
+  const [ purpose , setPurpose ] = useState("")
   const router = useRouter();
-  // Handle OTP input change
+
+  // Load saved forgot data from localStorage
+  useEffect(() => {
+    const storedData = localStorage.getItem("forgotData");
+    if (storedData) {
+      const forgotData = JSON.parse(storedData);
+      setEmail(forgotData.email || "");
+      setPurpose(FormData.purpose)
+    
+    }
+  }, []);
+
+  // Handle OTP input
   const handleChange = (index, value) => {
-    if (/^\d*$/.test(value)) { // Fixed: Added missing closing parenthesis
+    if (/^\d*$/.test(value)) {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
-
-      // Auto-focus next input
-      if (value && index < 5) {
-        inputsRef.current[index + 1].focus();
-      }
+      if (value && index < 5) inputsRef.current[index + 1].focus();
     }
   };
 
-  // Rest of your component remains the same...
   const handleKeyDown = (index, e) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputsRef.current[index - 1].focus();
@@ -40,61 +49,47 @@ export default function OTPVerification() {
     const pasteData = e.clipboardData.getData("text").slice(0, 6);
     if (/^\d+$/.test(pasteData)) {
       const newOtp = [...otp];
-      for (let i = 0; i < pasteData.length; i++) {
-        newOtp[i] = pasteData[i];
-      }
+      for (let i = 0; i < pasteData.length; i++) newOtp[i] = pasteData[i];
       setOtp(newOtp);
       inputsRef.current[Math.min(pasteData.length, 5)].focus();
     }
   };
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check if all OTP digits are filled
-    if (otp.some(digit => digit === "")) {
+    if (otp.some((d) => d === "")) {
       toast.error("Please enter the complete 6-digit OTP");
       return;
     }
 
     setIsLoading(true);
 
-
     try {
       const otpCode = otp.join("");
-      const response = await fetch('/api/auth/salons/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          otp: otpCode
-        }),
+      const response = await fetch("/api/auth/salons/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: otpCode, email }),
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Verification failed");
 
-      if (!response.ok) {
-        throw new Error(data.message || "Verification failed");
-      }
-
-      // Verification successful
       setIsVerified(true);
-
-        setAuthToken('salon', 'the salon is logined now.')
-        toast.success('Your Salon is verified successfully.')
-        return router.push("/salon-dashboard");
-
+      purpose ==="forgot" ? router.push("/salon/reset-password") :  
+      router.push('/salon/reset-password')
+      setAuthToken("salon", "the salon is logined now.");
+      toast.success("Your Salon is verified successfully.");
     } catch (err) {
       toast.error(err.message || "An error occurred during verification");
-      // Clear OTP on error
       setOtp(["", "", "", "", "", ""]);
-      inputsRef.current[0].focus();
+      inputsRef.current[0]?.focus();
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Timer for OTP resend
   useEffect(() => {
     if (timeLeft > 0 && !isVerified) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -102,39 +97,38 @@ export default function OTPVerification() {
     }
   }, [timeLeft, isVerified]);
 
+  // Resend OTP
+  const resendOTP = async () => {
+    try {
+      setTimeLeft(120);
+      const response = await fetch("/api/auth/salons/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to resend OTP");
+      toast.success("OTP has been resent to your email");
+    } catch (err) {
+      toast.error(err.message || "Failed to resend OTP");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center px-4 pt-[90px] relative overflow-hidden pb-8">
-      {/* Animated background elements */}
-      <motion.div 
+      {/* Animated backgrounds */}
+      <motion.div
         className="absolute h-[600px] w-[600px] bg-gradient-to-br from-purple-400/20 to-blue-400/20 rounded-full blur-3xl"
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0],
-          rotate: [0, 5, 0]
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          repeatType: "reverse"
-        }}
+        animate={{ x: [0, 100, 0], y: [0, -50, 0], rotate: [0, 5, 0] }}
+        transition={{ duration: 20, repeat: Infinity, repeatType: "reverse" }}
       />
-      
-      <motion.div 
+      <motion.div
         className="absolute h-[500px] w-[500px] bg-gradient-to-br from-pink-400/20 to-indigo-400/20 rounded-full blur-3xl right-10 bottom-10"
-        animate={{
-          x: [0, -80, 0],
-          y: [0, 60, 0],
-          rotate: [0, -5, 0]
-        }}
-        transition={{
-          duration: 25,
-          repeat: Infinity,
-          repeatType: "reverse",
-          delay: 5
-        }}
+        animate={{ x: [0, -80, 0], y: [0, 60, 0], rotate: [0, -5, 0] }}
+        transition={{ duration: 25, repeat: Infinity, repeatType: "reverse", delay: 5 }}
       />
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -149,8 +143,19 @@ export default function OTPVerification() {
                 transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
                 <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    />
                   </svg>
                 </div>
               </motion.div>
@@ -165,7 +170,7 @@ export default function OTPVerification() {
                     key={index}
                     ref={(el) => (inputsRef.current[index] = el)}
                     type="text"
-                    maxLength="1"
+                    maxLength={1}
                     value={digit}
                     onChange={(e) => handleChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
@@ -180,7 +185,10 @@ export default function OTPVerification() {
                 {timeLeft > 0 ? (
                   <div className="flex items-center justify-center gap-1">
                     <FaRegClock className="text-gray-400" />
-                    <span>Resend OTP in {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
+                    <span>
+                      Resend OTP in {Math.floor(timeLeft / 60)}:
+                      {String(timeLeft % 60).padStart(2, "0")}
+                    </span>
                   </div>
                 ) : (
                   <button
@@ -197,24 +205,17 @@ export default function OTPVerification() {
                 type="submit"
                 whileTap={{ scale: 0.98 }}
                 className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition"
-                disabled={isLoading || otp.some(digit => digit === "")}
+                disabled={isLoading || otp.some((digit) => digit === "")}
               >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Verifying...
-                  </div>
-                ) : (
-                  'Verify OTP'
-                )}
+                {isLoading ? "Verifying..." : "Verify OTP"}
               </motion.button>
             </form>
 
             <div className="mt-6 text-center text-sm text-gray-500">
-              <Link href="/salon/signin" className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline flex items-center justify-center">
+              <Link
+                href="/salon/signin"
+                className="font-medium text-indigo-600 hover:text-indigo-500 hover:underline flex items-center justify-center"
+              >
                 <FaArrowLeft className="mr-1" /> Back to login
               </Link>
             </div>
@@ -228,11 +229,11 @@ export default function OTPVerification() {
             <p className="text-gray-600 mb-6">
               Your account has been successfully verified. You can now access your salon dashboard.
             </p>
-            <Link 
-              href="/signin" 
+            <Link
+              href="/salon-dashboard"
               className="inline-block px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition"
             >
-              Go to Login
+              Go to Dashboard
             </Link>
           </div>
         )}

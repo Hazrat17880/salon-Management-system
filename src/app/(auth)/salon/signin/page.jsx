@@ -15,49 +15,69 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [ userRole , setUserRole ] = useState('salon');
+
+  const ChangeUserRole = (value)=>{
+    if(!value){
+      toast.error("user role value is required")
+    }
+    setUserRole(value)
+
+  }
 
   const router = useRouter();
 
-  const handleForgotPassword = () => {
-    router.push(`/forgot?role=salon`);
-  };
+  // base on the role the user will navigate to the specific route here 
+ // Login handler
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError(null);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
+  try {
+    // Dynamic endpoint based on selected role
+    const endpoint =
+      userRole === "user" ? "/api/auth/users/login" : "/api/auth/salons/login";
 
-    try {
-      // API endpoint based on user type
-      const endpoint = "/api/auth/salons/login" 
-       
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, rememberMe }),
+    });
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password, rememberMe }),
-      });
+    const data = await response.json();
 
-      const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Login failed");
 
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
+    toast.success("You are logged in successfully.");
 
-      // Redirect based on user type
-    
-        toast.success("You are logined successfully.")
-          setAuthToken('salon', 'token') // it is just use only to control the access the login page
-        router.push("/salon-dashboard");
-    
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+    // Set token for the correct role
+    setAuthToken(userRole, "token"); 
+
+    // Redirect based on role
+    if (userRole === "user") {
+      router.push("/user/dashboard");
+    } else {
+      router.push("/salon-dashboard");
     }
-  };
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Forgot password handler
+const handleForgotPassword = () => {
+  if (userRole === "user") {
+    router.push("/user/forgot");
+  } else {
+    router.push("/salon/forgot");
+  }
+};
+
+
+  
  useEffect(()=>{
     let token = getAuthToken('salon')
     if(token){
@@ -122,6 +142,7 @@ export default function LoginPage() {
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <Link href={"/user/signin"}
                 type="button"
+                onClick={()=>ChangeUserRole('user')}
                
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                  "text-gray-600 hover:text-gray-800"
@@ -131,6 +152,7 @@ export default function LoginPage() {
               </Link>
               <Link href={"/salon/signin"}
                 type="button"
+                onClick={()=>ChangeUserRole('salon')}
                
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   "bg-white shadow-sm text-indigo-600" 
@@ -160,7 +182,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                required
+                
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
             </div>
@@ -176,7 +198,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                required
+                
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition pr-10"
               />
               <button

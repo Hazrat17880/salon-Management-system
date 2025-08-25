@@ -48,9 +48,16 @@ export default function ForgotPassword() {
       }
 
       setEmailSent(true);
+      Cookies.set("user_email", email, { expires: 1 }); // ✅ set cookie for 1 day
+        localStorage.setItem(
+        "forgotData",
+        JSON.stringify({
+          email: email,
+          purpose: "forgot",
+        })
+      );
 
-      localStorage.setItem("email", email); // ✅ save email
-      router.push(`/user/otp-verification?purpose=forgot&role=${userType}`);
+      router.push(`/user/otp-verification`);
     } catch (err) {
       setError(err.message);
     } finally {

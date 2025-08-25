@@ -16,12 +16,21 @@ export default function CustomerLayout({ children }) {
     image: "/fe1.webp",
   };
 
+  // useEffect(() => {
+  //   setMessages([
+  //     { id: 1, text: "Your appointment is confirmed", unread: true },
+  //     { id: 2, text: "Payment received", unread: false },
+  //   ]);
+  // }, []);
   useEffect(() => {
-    setMessages([
-      { id: 1, text: "Your appointment is confirmed", unread: true },
-      { id: 2, text: "Payment received", unread: false },
-    ]);
-  }, []);
+  const data = [
+    { id: 1, text: "Your appointment is confirmed", unread: true },
+    { id: 2, text: "Payment received", unread: false },
+  ];
+  setMessages(data);
+  setUnreadNotifications(data.filter(m => m.unread).length);
+}, []);
+
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
