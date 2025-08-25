@@ -8,6 +8,11 @@ import Link from "next/link";
 import { getAuthToken, setAuthToken } from "@/lib/cookiesAction";
 import { toast } from "react-toastify";
 
+// signin with google coding 
+import { signIn } from "next-auth/react";
+
+
+
 export default function UserLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +25,12 @@ export default function UserLoginPage() {
 
   const handleForgotPassword = () => {
     router.push(`/user/forgot?role=user`);
+  };
+
+
+// google login controller 
+const handleGoogleLogin = () => {
+    signIn("google"); // redirects to Google
   };
 
   const handleLogin = async (e) => {
@@ -234,20 +245,22 @@ export default function UserLoginPage() {
             type="button"
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.98 }}
+            onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
           >
             <FcGoogle className="text-xl" />
             <span className="text-sm font-medium">Google</span>
           </motion.button>
-          <motion.button
-            type="button"
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-          >
-            <FaFacebook className="text-xl text-blue-600" />
-            <span className="text-sm font-medium">Facebook</span>
-          </motion.button>
+        <motion.button
+      type="button"
+      onClick={() => signIn("facebook")}
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+    >
+      <FaFacebook className="text-xl text-blue-600" />
+      <span className="text-sm font-medium">Facebook</span>
+    </motion.button>
         </div>
 
         <div className="mt-8 text-center text-sm text-gray-500">
