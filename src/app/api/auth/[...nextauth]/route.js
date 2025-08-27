@@ -5,6 +5,7 @@ import FacebookProvider from "next-auth/providers/facebook";
 import { query } from "@/lib/dbConnection";
 
 const handler = NextAuth({
+    secret: process.env.NEXTAUTH_SECRET, // 👈 add this
   providers: [
     GoogleProvider({
       clientId: process.env.AUTH_GOOGLE_ID,
