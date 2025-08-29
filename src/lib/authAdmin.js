@@ -2,11 +2,11 @@ import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { query } from '@/lib/dbConnection';
 
-export async function authSalons() {
+export async function authAdmin() {
   try {
     // Get token from cookies
-    const cookieStore =await cookies();
-    const token =  cookieStore.get('salonstoken')?.value;
+    const cookieStore = cookies();
+    const token = await cookieStore.get('adminToken')?.value;
 
     if (!token) {
       return { 
@@ -18,8 +18,8 @@ export async function authSalons() {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Check if the token has salon role
-    if (decoded.role !== 'salon') {
+    // Check if the token has admin role
+    if (decoded.role !== 'admin') {
       return { 
         isAuthenticated: false, 
         message: 'Invalid token role' 
@@ -27,15 +27,15 @@ export async function authSalons() {
     }
 
     // Verify salon exists in database
-    const [salon] = await query(
-      'SELECT id, email, is_verified FROM salons WHERE id = ?',
+    const [admin] = await query(
+      'SELECT id, email, is_verified FROM admin_auth WHERE id = ?',
       [decoded.id]
     );
 
-    if (!salon) {
+    if (!admin) {
       return { 
         isAuthenticated: false, 
-        message: 'Salon not found' 
+        message: 'admin not found' 
       };
     }
 
@@ -49,9 +49,9 @@ export async function authSalons() {
 
     return {
       isAuthenticated: true,
-      salon: {
-        id: salon.id,
-        email: salon.email
+      admin: {
+        id: admin.id,
+        email: admin.email
       }
     };
   } catch (error) {
@@ -65,9 +65,9 @@ export async function authSalons() {
 }
 
 // Higher-order function to protect salon routes
-export function withSalonAuth(handler) {
+export function withAdminAuth(handler) {
   return async (request) => {
-    const authResult = await authSalons();
+    const authResult = await authAdmin();
     
     if (!authResult.isAuthenticated) {
       return new Response(JSON.stringify({ 
@@ -80,7 +80,7 @@ export function withSalonAuth(handler) {
     }
 
     // Add salon info to request object
-    request.salon = authResult.salon;
+    request.admin = authResult.admin;
     
     return handler(request);
   };

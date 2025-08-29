@@ -8,10 +8,10 @@ export async function POST(request) {
     // Parse body once
     const body = await request.json();
     const otp = body.otp;
-    const email = body.email;
+    // const email = body.email;
 
     const cookieStore = cookies();
-    // const email = cookieStore.get('salon_email')?.value;
+    const email = await cookieStore.get('salon_email')?.value;
 
     console.log("OTP from request:", otp);
     console.log("Email from cookie:", email);
@@ -58,7 +58,8 @@ export async function POST(request) {
     await query(
       `UPDATE salons SET 
        otp_code = NULL, 
-       otp_expires_at = NULL 
+       otp_expires_at = NULL ,
+       active = true
        WHERE id = ?`,
       [salon.id]
     );
@@ -71,7 +72,7 @@ export async function POST(request) {
     );
 
     // Set auth cookie
-    cookies().set('salonstoken', token, {
+    await cookies().set('salonstoken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

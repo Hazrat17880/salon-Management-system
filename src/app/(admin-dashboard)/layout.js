@@ -36,9 +36,6 @@ export default function AdminLayout({ children }) {
   };
 
   return (
-  <html>
-    <body>
-
         <div className="flex h-screen bg-gradient-to-r from-gray-50 to-indigo-50 font-sans">
       <Sidebar
         activeTab={activeTab}
@@ -99,7 +96,6 @@ export default function AdminLayout({ children }) {
         </main>
       </div>
     </div>
-    </body>
-  </html>
+
   );
 }

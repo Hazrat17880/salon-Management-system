@@ -80,7 +80,23 @@ CREATE TABLE IF NOT EXISTS users (
 
 `)
 
+//  admin auth
 
+    await query(`
+CREATE TABLE IF NOT EXISTS admin_auth (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  otp_code VARCHAR(10),
+  otp_expires_at DATETIME,
+  is_verified BOOLEAN DEFAULT true,
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+    `);
 //  _______________________________SALON TABLES _____________________________________
 // table for salon services
 await query(`
@@ -105,6 +121,34 @@ await query(`
 
 );`)
 
+// review
+await query(`
+  CREATE TABLE IF NOT EXISTS review (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    review TEXT NOT NULL,
+    stars INT NOT NULL CHECK (stars >= 1 AND stars <= 5),
+    user_id INT NOT NULL,
+    salon_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+
+  )
+`);
+
+await query(`
+  CREATE TABLE IF NOT EXISTS staff (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    image VARCHAR(255),
+    salon_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
+  )
+`);
 
 // for favorite salon
 await query(`

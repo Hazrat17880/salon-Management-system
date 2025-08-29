@@ -82,7 +82,7 @@ export async function POST(request) {
     });
 
     // Set cookie in the response
-    cookies().set({
+   await cookies().set({
       name: 'salonstoken',
       value: token,
       httpOnly: true,

@@ -1,10 +1,10 @@
 // app/api/salons/[id]/route.js
-import { withUserAuth } from "@/lib/authUser";
+import { withAdminAuth } from "@/lib/authAdmin";
 import { query } from "@/lib/dbConnection";
 import { NextResponse } from "next/server";
 
-const get = withUserAuth(async(req)=> {
-   const userid = req.user.id
+const get = withAdminAuth(async(req)=> {
+   const userid = req.admin.id
   const { searchParams } = new URL(req.url);
      const  id = parseInt(searchParams.get('id'))
   if (!id) {
@@ -36,18 +36,12 @@ const get = withUserAuth(async(req)=> {
  const favorite = await query(
       'SELECT * FROM favorite_salon WHERE  user_id =?',[userid]
     );
-    const staff = await query(
-      `
-      SELECT * FROM staff WHERE salon_id=?
-      `,[id]
-    )
     return NextResponse.json({
       success: true,
       data: {
         salon,
         services,
-        favorite,
-        staff
+        favorite
       },
     });
   } catch (error) {

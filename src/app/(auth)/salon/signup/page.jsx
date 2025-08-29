@@ -146,7 +146,7 @@ export default function SalonSignupPage() {
     e.preventDefault();
     
     if (!formData.id_card || !formData.license) {
-      toast.error("Please upload both required documents");
+      toast.info("Please upload both required documents");
       return;
     }
     
@@ -195,6 +195,7 @@ export default function SalonSignupPage() {
     if (token) {
       router.push('/salon-dashboard/');
     }
+    localStorage.clear();
   }, [router]);
 
   // Auto-scroll to top on step change

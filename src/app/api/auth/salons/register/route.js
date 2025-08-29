@@ -264,7 +264,7 @@ export async function POST(request) {
 
     // Set email cookie for verification
     const cookieStore = cookies();
-    cookieStore.set('salon_email', salonData.email, {
+    await cookieStore.set('salon_email', salonData.email, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

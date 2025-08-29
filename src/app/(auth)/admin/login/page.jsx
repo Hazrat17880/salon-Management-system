@@ -1,8 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaExclamationTriangle } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { getAuthToken, setAuthToken } from "@/lib/cookiesAction";
 
 export default function AdminLogin() {
   const [formData, setFormData] = useState({
@@ -12,21 +14,62 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log(formData);
+    setError("");
+
+    try {
+      const response = await fetch('/api/auth/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store remember me preference in localStorage
+        if (rememberMe) {
+         setAuthToken('rememberAdminEmail', formData.email);
+        } else {
+          setAuthToken('rememberAdminEmail');
+        }
+        
+        // Redirect to admin dashboard
+        router.push('/admin-dashboard');
+      } else {
+        // Login failed
+        setError(data.message || 'Login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
+
+  // Pre-fill email if remember me was checked previously
+  useEffect(() => {
+    const rememberedEmail =  getAuthToken('rememberAdminEmail');
+    if (rememberedEmail) {
+      setFormData(prev => ({ ...prev, email: rememberedEmail }));
+      setRememberMe(true);
+    }
+  },[]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 relative overflow-hidden">
@@ -82,6 +125,17 @@ export default function AdminLogin() {
           <p className="text-gray-500">Salon Management System</p>
         </div>
 
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center"
+          >
+            <FaExclamationTriangle className="text-red-500 mr-2 flex-shrink-0" />
+            <span className="text-red-700 text-sm">{error}</span>
+          </motion.div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Admin Email*</label>
@@ -93,6 +147,7 @@ export default function AdminLogin() {
               placeholder="admin@salon.com"
               required
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              disabled={isLoading}
             />
           </div>
 
@@ -108,11 +163,13 @@ export default function AdminLogin() {
                 required
                 minLength="8"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-10"
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
@@ -127,12 +184,17 @@ export default function AdminLogin() {
                 checked={rememberMe}
                 onChange={() => setRememberMe(!rememberMe)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                disabled={isLoading}
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600">
                 Remember me
               </label>
             </div>
-            <Link href="/admin/forgot-password" className="text-sm text-blue-600 hover:text-blue-500 hover:underline">
+            <Link 
+              href="/admin/forgot-password" 
+              className="text-sm text-blue-600 hover:text-blue-500 hover:underline"
+              onClick={(e) => isLoading && e.preventDefault()}
+            >
               Forgot password?
             </Link>
           </div>
@@ -140,7 +202,7 @@ export default function AdminLogin() {
           <motion.button
             type="submit"
             whileTap={{ scale: 0.98 }}
-            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg shadow hover:shadow-md transition"
+            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg shadow hover:shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -156,6 +218,8 @@ export default function AdminLogin() {
             )}
           </motion.button>
         </form>
+
+       
       </motion.div>
     </div>
   );

@@ -12,7 +12,7 @@ import {
 } from "react-icons/fi";
 import { RiDashboardFill, RiScissorsFill } from "react-icons/ri";
 import useLogout from "../hooks/SalonLogout";
-import { MessageSquare } from "lucide-react";
+import { AlertTriangle, Calendar, LayoutDashboard, MessageSquare, Scissors, Settings, Star, User, Users } from "lucide-react";
 
 export default function SalonsSideBar() {
   const router = useRouter();
@@ -20,15 +20,23 @@ export default function SalonsSideBar() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   // Define URLs for each tab
-  const menuItems = [
-    { id: "dashboard", icon: <RiDashboardFill size={20} />, label: "Dashboard", href: "/salon-dashboard/" },
-    { id: "appointments", icon: <FiCalendar size={20} />, label: "Appointments", href: "/salon-dashboard/appointments" },
-    // { id: "customers", icon: <FiUsers size={20} />, label: "Customers", href: "/salon-dashboard/customers" },
-    { id: "services", icon: <FiSettings size={20} />, label: "Services", href: "/salon-dashboard/services" },
-    { id: "messages", icon: <MessageSquare size={20} />, label: "Messages", href: "/salon-dashboard/messages" },
-
-    { id: "profile", icon: <FiSettings size={20} />, label: "Profile Setting", href: "/salon-dashboard/profile" },
-  ];
+const menuItems = [
+  // Main Sections
+  { id: "dashboard", icon: <LayoutDashboard size={20} />, label: "Dashboard", href: "/salon-dashboard/" },
+  { id: "appointments", icon: <Calendar size={20} />, label: "Appointments", href: "/salon-dashboard/appointments" },
+  { id: "services", icon: <Scissors size={20} />, label: "Services", href: "/salon-dashboard/services" },
+  { id: "staff", icon: <Users size={20} />, label: "Staff", href: "/salon-dashboard/staff" },
+  
+  // Customer Interaction
+  { id: "messages", icon: <MessageSquare size={20} />, label: "Messages", href: "/salon-dashboard/messages" },
+  { id: "reviews", icon: <Star size={20} />, label: "Reviews", href: "/salon-dashboard/reviews" },
+  { id: "complaints", icon: <AlertTriangle size={20} />, label: "Complaints", href: "/salon-dashboard/complaints" },
+  
+ 
+  // Settings
+  { id: "profile", icon: <User size={20} />, label: "Profile", href: "/salon-dashboard/profile" },
+  { id: "settings", icon: <Settings size={20} />, label: "Settings", href: "/salon-dashboard/settings" },
+];
 
   function handleTabChange(id, href) {
     setActiveTab(id);

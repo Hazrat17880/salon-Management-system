@@ -30,7 +30,7 @@ export default function UserLoginPage() {
 
 // google login controller 
 const handleGoogleLogin = () => {
-    signIn("google"); // redirects to Google
+    signIn("google"); 
   };
 
   const handleLogin = async (e) => {

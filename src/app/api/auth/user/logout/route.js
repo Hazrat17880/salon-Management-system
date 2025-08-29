@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 export async function POST() {
   try {
     // Remove the cookie
-    cookies().set('salonstoken', '', {
+  await  cookies().set('salonstoken', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

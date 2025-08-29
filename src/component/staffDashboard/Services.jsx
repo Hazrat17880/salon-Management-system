@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   FiEdit2, FiPlus, FiX, FiSave, FiEye, 
   FiTrash2, FiToggleLeft, FiToggleRight, 
-  FiChevronLeft, FiChevronRight, FiUpload, FiImage
+  FiChevronLeft, FiChevronRight, FiUpload, FiImage,
+  FiFilter
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
@@ -13,12 +14,16 @@ const Services = () => {
   const [services, setServices] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentService, setCurrentService] = useState(null);
+  const [serviceToDelete, setServiceToDelete] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const [newService, setNewService] = useState({
     main_category: 'unisex',
@@ -57,6 +62,17 @@ const Services = () => {
   useEffect(() => {
     fetchServices();
   }, []);
+
+  // Filter services based on selected filters
+  const filteredServices = services.filter(service => {
+    if (categoryFilter !== 'all' && service.main_category !== categoryFilter) {
+      return false;
+    }
+    if (statusFilter !== 'all' && service.status !== statusFilter) {
+      return false;
+    }
+    return true;
+  });
 
   // Handle image file selection
   const handleImageChange = (e) => {
@@ -244,25 +260,35 @@ const Services = () => {
     }
   };
 
+  // Show delete confirmation
+  const showDeleteConfirm = (service) => {
+    setServiceToDelete(service);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Hide delete confirmation
+  const hideDeleteConfirm = () => {
+    setServiceToDelete(null);
+    setIsDeleteModalOpen(false);
+  };
+
   // Delete service
-  const handleDeleteService = async (id) => {
+  const handleDeleteService = async () => {
+    if (!serviceToDelete) return;
+
     try {
-      if (!window.confirm('Are you sure you want to delete this service?')) {
-        return;
-      }
-      
       setIsLoading(true);
       const response = await fetch('/api/salons/services', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id: serviceToDelete.id })
       });
 
       const data = await response.json();
       if (data.success) {
-        setServices(prev => prev.filter(service => service.id !== id));
+        setServices(prev => prev.filter(service => service.id !== serviceToDelete.id));
         toast.success('Service deleted successfully');
       } else {
         toast.error(data.message || 'Failed to delete service');
@@ -272,6 +298,7 @@ const Services = () => {
       toast.error('Failed to delete service');
     } finally {
       setIsLoading(false);
+      hideDeleteConfirm();
     }
   };
 
@@ -384,9 +411,67 @@ const Services = () => {
         </div>
       )}
 
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <FiFilter className="text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Filters:</span>
+          </div>
+          
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="all">All Categories</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unisex">Unisex</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setCategoryFilter('all');
+                  setStatusFilter('all');
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center">
-          <h3 className="font-medium">Available Services ({services.length})</h3>
+          <h3 className="font-medium">
+            Available Services ({filteredServices.length})
+            {services.length !== filteredServices.length && (
+              <span className="text-sm text-gray-500 ml-2">
+                (Filtered from {services.length} total)
+              </span>
+            )}
+          </h3>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-500">
               Active: {services.filter(s => s.status === 'active').length}
@@ -401,9 +486,9 @@ const Services = () => {
           <div className="p-8 text-center text-gray-500">
             Loading services...
           </div>
-        ) : services.length > 0 ? (
+        ) : filteredServices.length > 0 ? (
           <div className="divide-y">
-            {services.map((service) => (
+            {filteredServices.map((service) => (
               <div key={service.id} className={`p-4 transition-colors ${service.status === 'active' ? 'hover:bg-gray-50' : 'bg-gray-100 hover:bg-gray-200'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -461,7 +546,7 @@ const Services = () => {
                       {service.status === 'active' ? <FiToggleRight size={18} /> : <FiToggleLeft size={18} />}
                     </button>
                     <button 
-                      onClick={() => handleDeleteService(service.id)}
+                      onClick={() => showDeleteConfirm(service)}
                       className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50"
                       title="Delete"
                     >
@@ -474,10 +559,56 @@ const Services = () => {
           </div>
         ) : (
           <div className="p-8 text-center text-gray-500">
-            No services available. Add some services to get started.
+            {services.length === 0 ? (
+              'No services available. Add some services to get started.'
+            ) : (
+              'No services match your current filters. Try adjusting your filters.'
+            )}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {isDeleteModalOpen && serviceToDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-lg p-6 w-full max-w-md"
+            >
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                  <FiTrash2 className="h-6 w-6 text-red-600" />
+                </div>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">
+                  Delete Service
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  Are you sure you want to delete the service "{serviceToDelete.title}"? This action cannot be undone.
+                </p>
+              </div>
+              <div className="mt-5 sm:mt-6 flex gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={hideDeleteConfirm}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteService}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Delete Service
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Add/Edit Service Modal */}
       <AnimatePresence>
@@ -798,189 +929,103 @@ const Services = () => {
       </AnimatePresence>
 
       {/* View Service Modal */}
-     <AnimatePresence>
-  {isViewModalOpen && currentService && (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.98 }}
-        transition={{ 
-          type: "spring",
-          damping: 25,
-          stiffness: 300
-        }}
-        className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl mx-2 md:mx-0 border border-gray-200 dark:border-gray-700"
-      >
-        {/* Header */}
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <motion.h3 
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-2xl font-bold text-gray-900 dark:text-white"
-          >
-            Service Details
-          </motion.h3>
-          <button 
-            onClick={() => setIsViewModalOpen(false)}
-            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-          >
-            <FiX size={24} />
-          </button>
-        </div>
-        
-        {/* Content */}
-        <div className="p-5 space-y-6 max-h-[70vh] overflow-y-auto">
-          {/* Title and Status */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-          >
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {currentService.title}
-            </h2>
-            <span className={`px-3 py-1.5 rounded-full text-sm font-semibold ${
-              currentService.status === 'active' 
-                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' 
-                : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
-            }`}>
-              {currentService.status === 'active' ? 'Active' : 'Inactive'}
-            </span>
-          </motion.div>
-
-          {/* Categories */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap gap-2"
-          >
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">
-              {currentService.main_category}
-            </span>
-            {currentService.sub_category && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                {currentService.sub_category}
-              </span>
-            )}
-          </motion.div>
-
-          {/* Image */}
-          {currentService.image_url && (
+      <AnimatePresence>
+        {isViewModalOpen && currentService && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.25 }}
-              className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md"
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             >
-              <img 
-                src={currentService.image_url} 
-                alt={currentService.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-            </motion.div>
-          )}
-
-          {/* Description */}
-          {currentService.description && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="space-y-2"
-            >
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Description</h4>
-              <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">
-                {currentService.description}
-              </p>
-            </motion.div>
-          )}
-
-          {/* Details Grid */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
-            {/* Price */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Price</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${currentService.price}
-                {currentService.discount > 0 && (
-                  <span className="ml-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    ({currentService.discount}% off)
-                  </span>
+              <div className="p-4 border-b flex justify-between items-center">
+                <h3 className="text-lg font-medium">Service Details</h3>
+                <button 
+                  onClick={() => setIsViewModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {currentService.image_url && (
+                  <div className="w-full h-48 rounded-md overflow-hidden">
+                    <img 
+                      src={currentService.image_url} 
+                      alt={currentService.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 )}
-              </p>
-            </div>
-
-            {/* Duration */}
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {currentService.duration_minutes} minutes
-              </p>
-            </div>
-
-            {/* Availability */}
-            {(currentService.available_start_time || currentService.available_end_time) && (
-              <>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Available From</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {currentService.available_start_time || 'Flexible'}
-                  </p>
+                
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800">{currentService.title}</h2>
+                  <div className="flex gap-2 mt-2">
+                    <span className="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">
+                      {currentService.main_category}
+                    </span>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      currentService.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {currentService.status === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Available To</p>
-                  <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {currentService.available_end_time || 'Flexible'}
-                  </p>
+                
+                {currentService.sub_category && (
+                  <div>
+                    <h4 className="font-medium text-gray-700">Sub Category</h4>
+                    <p className="text-gray-600">{currentService.sub_category}</p>
+                  </div>
+                )}
+                
+                {currentService.description && (
+                  <div>
+                    <h4 className="font-medium text-gray-700">Description</h4>
+                    <p className="text-gray-600 whitespace-pre-line">{currentService.description}</p>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-gray-700">Price</h4>
+                    <p className="text-2xl font-bold text-gray-800">
+                      ${currentService.price}
+                      {currentService.discount > 0 && (
+                        <span className="ml-2 text-sm text-green-600">
+                          ({currentService.discount}% off)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium text-gray-700">Duration</h4>
+                    <p className="text-xl font-semibold text-gray-800">{currentService.duration_minutes} minutes</p>
+                  </div>
                 </div>
-              </>
-            )}
-          </motion.div>
-
-          {/* Special Days */}
-          {currentService.special_days && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
-            >
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Special Days</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {currentService.special_days}
-              </p>
+                
+                {(currentService.available_start_time || currentService.available_end_time) && (
+                  <div>
+                    <h4 className="font-medium text-gray-700">Availability</h4>
+                    <p className="text-gray-600">
+                      {currentService.available_start_time} - {currentService.available_end_time}
+                    </p>
+                  </div>
+                )}
+                
+                {currentService.special_days && (
+                  <div>
+                    <h4 className="font-medium text-gray-700">Special Days</h4>
+                    <p className="text-gray-600">{currentService.special_days}</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
-          )}
-        </div>
-        
-        {/* Footer */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45 }}
-          className="p-5 border-t border-gray-200 dark:border-gray-700 flex justify-end"
-        >
-          <button 
-            onClick={() => setIsViewModalOpen(false)}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-sm hover:shadow-md"
-          >
-            Close
-          </button>
-        </motion.div>
-      </motion.div>
-    </div>
-  )}
-</AnimatePresence>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

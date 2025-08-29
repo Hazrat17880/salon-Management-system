@@ -77,7 +77,7 @@ export default function OTPVerification() {
 
       setIsVerified(true);
       purpose ==="forgot" ? router.push("/salon/reset-password") :  
-      router.push('/salon/reset-password')
+      router.push('/salon-dashboard')
       setAuthToken("salon", "the salon is logined now.");
       toast.success("Your Salon is verified successfully.");
     } catch (err) {

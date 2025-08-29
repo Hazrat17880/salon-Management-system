@@ -22,7 +22,6 @@ const AppointmentsContent = () => {
         setLoading(true);
         const res = await fetch("/api/user/appointments", { method: "GET" });
         const data = await res.json();
-        console.log(data.data);
         if (res.ok) {
           setAppointments(data.data || []);
         } else {
@@ -41,7 +40,7 @@ const AppointmentsContent = () => {
   const filteredAppointments =
     filter === "all"
       ? appointments
-      : appointments.filter((a) => a.status === filter);
+      : appointments.filter((a) => a.appointment_status === filter);
 
   // Cancel appointment with confirmation
   const confirmCancelAppointment = (id, name) => {
@@ -71,8 +70,8 @@ const AppointmentsContent = () => {
   const handleEditClick = (appointment) => {
     setEditingId(appointment.id);
     setEditData({
-      date: appointment.date || "",
-      time: appointment.time || "",
+      date: formatDateForInput(appointment.appointment_date),
+      time: appointment.appointment_time || "",
     });
   };
 
@@ -89,9 +88,14 @@ const AppointmentsContent = () => {
         toast.success(data.message || "Appointment updated");
         setAppointments((prev) =>
           prev.map((a) =>
-            a.id === id ? { ...a, appointment_date: updated.date, appointment_time: updated.time } : a
+            a.id === id ? { 
+              ...a, 
+              appointment_date: updated.date, 
+              appointment_time: updated.time 
+            } : a
           )
         );
+        setEditingId(null);
       } else {
         toast.error(data.message || "Failed to update appointment");
       }
@@ -102,7 +106,28 @@ const AppointmentsContent = () => {
 
   const handleUpdate = (id) => {
     updateAppointment(id, editData);
+  };
+
+  const handleCancelEdit = () => {
     setEditingId(null);
+    setEditData({ date: "", time: "" });
+  };
+
+  // Format date for input field (YYYY-MM-DD)
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    
+    try {
+      const date = new Date(dateString);
+      // Convert to local date and format as YYYY-MM-DD
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      return "";
+    }
   };
 
   return (
@@ -204,7 +229,8 @@ const AppointmentsContent = () => {
                 editData={editData}
                 setEditData={setEditData}
                 onUpdate={() => handleUpdate(appointment.id)}
-                onCancelEdit={() => setEditingId(null)}
+                onCancelEdit={handleCancelEdit}
+                formatDateForInput={formatDateForInput}
               />
             ))
           ) : (
@@ -230,6 +256,7 @@ const AppointmentCard = ({
   setEditData,
   onUpdate,
   onCancelEdit,
+  formatDateForInput
 }) => {
   const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
@@ -243,18 +270,6 @@ const AppointmentCard = ({
     confirmed: <FiCheck className="mr-1" />,
     completed: <FiCheck className="mr-1" />,
     rejected: <FiX className="mr-1" />,
-  };
-
-  // Format date for input field (YYYY-MM-DD)
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return "";
-    
-    try {
-      const date = new Date(dateString);
-      return date.toISOString().split('T')[0];
-    } catch (error) {
-      return "";
-    }
   };
 
   return (
@@ -289,18 +304,18 @@ const AppointmentCard = ({
 
       {isEditing ? (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Date
               </label>
               <input
                 type="date"
-                value={formatDateForInput(editData.date)}
+                value={editData.date}
                 onChange={(e) =>
                   setEditData({ ...editData, date: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <div>
@@ -309,24 +324,25 @@ const AppointmentCard = ({
               </label>
               <input
                 type="time"
-                value={editData.time || ""}
+                value={editData.time}
                 onChange={(e) =>
                   setEditData({ ...editData, time: e.target.value })
                 }
-                className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
             <button
               onClick={onCancelEdit}
-              className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center"
+              className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center"
             >
               <FiX className="mr-1" /> Cancel
             </button>
             <button
               onClick={onUpdate}
-              className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+              disabled={!editData.date || !editData.time}
+              className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center"
             >
               <FiCheck className="mr-1" /> Confirm Changes
             </button>
@@ -356,13 +372,13 @@ const AppointmentCard = ({
               <div className="flex space-x-3">
                 <button
                   onClick={onEdit}
-                  className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center"
+                  className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
                 >
                   <FiEdit2 className="mr-1" /> Reschedule
                 </button>
                 <button
                   onClick={onCancel}
-                  className="px-3 py-1.5 text-sm bg-white border border-red-500 text-red-500 rounded-lg hover:bg-red-50 flex items-center"
+                  className="px-3 py-1.5 text-sm bg-white border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center"
                 >
                   <FiTrash2 className="mr-1" /> Cancel
                 </button>
