@@ -21,6 +21,7 @@ const get = withAdminAuth(async(req)=> {
       [id]
     );
 
+
     if (!salon) {
       return NextResponse.json({
         success: false,
@@ -33,15 +34,17 @@ const get = withAdminAuth(async(req)=> {
       "SELECT * FROM salon_services WHERE salon_id = ?",
       [id]
     );
- const favorite = await query(
-      'SELECT * FROM favorite_salon WHERE  user_id =?',[userid]
-    );
+    const staff = await query(`
+      SELECT * FROM staff WHERE salon_id = ?
+      `,[userid])
+
     return NextResponse.json({
       success: true,
       data: {
         salon,
         services,
-        favorite
+      
+        staff
       },
     });
   } catch (error) {

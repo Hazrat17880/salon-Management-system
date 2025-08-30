@@ -1,4 +1,4 @@
-import FeedbackComplaints from '@/component/admin-panel/FeedbackComplaints';
+import FeedbackComplaints from '@/component/admin-panel/Complaints';
 import React from 'react';
 
 const Page = () => {
