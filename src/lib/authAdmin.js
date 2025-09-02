@@ -5,8 +5,8 @@ import { query } from '@/lib/dbConnection';
 export async function authAdmin() {
   try {
     // Get token from cookies
-    const cookieStore = cookies();
-    const token = await cookieStore.get('adminToken')?.value;
+    const cookieStore = await cookies();
+    const token =  cookieStore.get('adminToken')?.value;
 
     if (!token) {
       return { 

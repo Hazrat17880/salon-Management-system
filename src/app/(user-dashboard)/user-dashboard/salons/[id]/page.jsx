@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -305,13 +306,12 @@ export default function SalonDetails() {
   };
 
   // handle appointment
- const handleBookAppointment = async () => {
+  const handleBookAppointment = async () => {
     if (!appointmentDate || !appointmentTime) {
       toast.error("Please select both date and time");
       return;
     }
 
-    // setIsBooking(true);
     try {
       const res = await fetch("/api/user/appointments", {
         method: "POST",
@@ -327,7 +327,6 @@ export default function SalonDetails() {
       });
 
       const data = await res.json();
-      console.log(res, 'the response is ', data);
       if (data.success) {
         toast.success("Appointment booked successfully!");
         setAppointmentModal(false);
@@ -342,6 +341,7 @@ export default function SalonDetails() {
       toast.error("Error booking appointment");
     } 
   };
+
   if (loading) return <div className="p-10 text-center">Loading salon details...</div>;
   if (!salon) return <div className="p-10 text-center text-red-500">Salon not found</div>;
 
@@ -494,7 +494,14 @@ export default function SalonDetails() {
                       <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                         ⏱️ {service.duration || "30 min"}
                       </span>
-                      <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                      <button 
+                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedService(service);
+                          setAppointmentModal(true);
+                        }}
+                      >
                         Book Now →
                       </button>
                     </div>
@@ -709,7 +716,7 @@ export default function SalonDetails() {
             <div className="mb-4">
               <label className="block text-gray-700 font-medium mb-2">Your Review</label>
               <textarea
-                className="w-full border rounded-lg p-3 h-32 resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                            className="w-full border rounded-lg p-3 h-32 resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 placeholder="Share your experience with this salon..."
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
@@ -867,6 +874,15 @@ export default function SalonDetails() {
               <X size={24} />
             </button>
             <h3 className="text-xl font-bold mb-4">Book Appointment</h3>
+            
+            {selectedService && (
+              <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+                <h4 className="font-semibold text-indigo-800 mb-2">Service: {selectedService.name}</h4>
+                <p className="text-indigo-600">Price: ${selectedService.price}</p>
+                <p className="text-indigo-600">Duration: {selectedService.duration || "30 min"}</p>
+              </div>
+            )}
+            
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-gray-600 mb-1">Date</label>
@@ -875,6 +891,7 @@ export default function SalonDetails() {
                   className="w-full border rounded-lg p-2"
                   value={appointmentDate}
                   onChange={(e) => setAppointmentDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
                 />
               </div>
               <div>
@@ -889,6 +906,7 @@ export default function SalonDetails() {
               <button
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 rounded-xl hover:from-green-700 hover:to-emerald-700 transition"
                 onClick={handleBookAppointment}
+                disabled={!appointmentDate || !appointmentTime}
               >
                 Confirm Appointment
               </button>

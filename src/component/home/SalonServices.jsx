@@ -4,183 +4,41 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// This is the data structure for individual services.
-const services = [
-  {
-    id: 's1',
-    name: 'Classic Haircut',
-    description: 'A timeless haircut for a clean, sharp look.',
-    price: 30,
-    gender: 'unisex',
-    category: 'Hair Cutting',
-    image: '/salon1.jpg', // Using user-provided image path
-    rating: 4.8,
-  },
-  {
-    id: 's2',
-    name: 'Full Facial Treatment',
-    description: 'A deep-cleansing and revitalizing facial for all skin types.',
-    price: 55,
-    gender: 'unisex',
-    category: 'Facial',
-    image: '/salon2.jpg', // Using user-provided image path
-    rating: 4.9,
-  },
-  {
-    id: 's3',
-    name: 'Gentleman\'s Beard Trim',
-    description: 'A professional trim and shape for a perfect beard.',
-    price: 20,
-    gender: 'male',
-    category: 'Beard Trim',
-    image: '/salon3.jpg', // Using user-provided image path
-    rating: 4.5,
-  },
-  {
-    id: 's4',
-    name: 'Acrylic Nail Extensions',
-    description: 'Durable and beautiful acrylic extensions for stylish nails.',
-    price: 75,
-    gender: 'female',
-    category: 'Manicure',
-    image: '/salon3.jpg', // Using user-provided image path
-    rating: 4.7,
-  },
-  {
-    id: 's5',
-    name: 'Kids Haircut',
-    description: 'A fun and quick haircut for children of all ages.',
-    price: 25,
-    gender: 'unisex',
-    category: 'Hair Cutting',
-    image: '/salon2.jpg', // Using user-provided image path
-    rating: 4.6,
-  },
-  {
-    id: 's6',
-    name: 'Special Occasion Makeup',
-    description: 'Professional makeup for weddings, parties, or any special event.',
-    price: 90,
-    gender: 'female',
-    category: 'Makeup',
-    image: '/salon1.jpg', // Using user-provided image path
-    rating: 5.0,
-  },
-  {
-    id: 's7',
-    name: 'Hot Stone Massage',
-    description: 'A relaxing massage with heated stones to soothe tired muscles.',
-    price: 110,
-    gender: 'unisex',
-    category: 'Massage',
-    image: '/salon3.jpg', // Using user-provided image path
-    rating: 4.9,
-  },
-  {
-    id: 's8',
-    name: 'Eyebrow Threading',
-    description: 'Precision eyebrow threading for a clean and defined shape.',
-    price: 15,
-    gender: 'female',
-    category: 'Threading',
-    image: '/salon2.jpg', // Using user-provided image path
-    rating: 4.8,
-  },
-  // Adding more services to demonstrate the "Show More" functionality
-  {
-    id: 's9',
-    name: 'Deep Tissue Massage',
-    description: 'Targeted massage for chronic muscle tension and pain relief.',
-    price: 95,
-    gender: 'unisex',
-    category: 'Massage',
-    image: '/salon1.jpg',
-    rating: 4.7,
-  },
-  {
-    id: 's10',
-    name: 'Brazilian Blowout',
-    description: 'Smoothing treatment for frizzy hair that lasts up to 12 weeks.',
-    price: 200,
-    gender: 'female',
-    category: 'Hair Treatment',
-    image: '/salon2.jpg',
-    rating: 4.8,
-  },
-  {
-    id: 's11',
-    name: 'Men\'s Hair Color',
-    description: 'Professional coloring to cover grays or add dimension.',
-    price: 65,
-    gender: 'male',
-    category: 'Hair Coloring',
-    image: '/salon3.jpg',
-    rating: 4.6,
-  },
-  {
-    id: 's12',
-    name: 'Pedicure Deluxe',
-    description: 'Luxurious foot treatment with exfoliation and massage.',
-    price: 60,
-    gender: 'unisex',
-    category: 'Pedicure',
-    image: '/salon1.jpg',
-    rating: 4.9,
-  },
-];
-
-// Dynamically generate unique categories and price ranges from the data.
-const uniqueServices = Array.from(
-  new Set(services.map((service) => service.category))
-);
-const priceRanges = [
-  { label: 'All Prices', min: 0, max: 1000 },
-  { label: 'Under $30', min: 0, max: 30 },
-  { label: '$30 - $60', min: 30, max: 60 },
-  { label: 'Over $60', min: 60, max: 1000 },
-];
-
-// SVG icon for the filter button
-const FilterIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className="w-6 h-6"
-  >
-    <path
-      fillRule="evenodd"
-      d="M3.798 2.378A.75.75 0 014.5 2.25h15a.75.75 0 01.708.91l-6.425 14.852a.75.75 0 01-.137.28L8.643 20.94a.75.75 0 01-1.342-.238l-4.14-11.666a.75.75 0 01.64-1.071zm3.842 10.999a.75.75 0 01.32-.47l.95-.568V7.5a.75.75 0 011.5 0v5.303l.95.568a.75.75 0 01-.32.47l-1.9 1.139a.75.75 0 01-.762 0l-1.9-1.139a.75.75 0 01-.32-.47z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className="w-6 h-6"
-  >
-    <path
-      fillRule="evenodd"
-      d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
-const SalonServices = () => {
+const SalonServices = ({ services = [] }) => {
   // State to manage the active filters and modal visibility
   const [selectedGender, setSelectedGender] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedPriceRange, setSelectedPriceRange] = useState(priceRanges[0]);
+  const [selectedPriceRange, setSelectedPriceRange] = useState({ label: 'All Prices', min: 0, max: 1000 });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [visibleServicesCount, setVisibleServicesCount] = useState(6); // Initial number of services to show
+  const [visibleServicesCount, setVisibleServicesCount] = useState(6);
+
+  // Process API data to match expected format
+  const processedServices = services.map(service => ({
+    id: service.id,
+    name: service.title,
+    description: service.description,
+    price: service.final_price || service.price,
+    gender: service.main_category?.toLowerCase() || 'unisex',
+    category: service.sub_category,
+    image: service.image_url || '/default-service.jpg',
+    rating: service.avg_rating || 4.5,
+    salon_name: service.salon_name
+  }));
+
+  // Dynamically generate unique categories and price ranges from the data
+  const uniqueCategories = Array.from(
+    new Set(processedServices.map((service) => service.category))
+  ).filter(Boolean);
+
+  const priceRanges = [
+    { label: 'All Prices', min: 0, max: 1000 },
+    { label: 'Under $30', min: 0, max: 30 },
+    { label: '$30 - $60', min: 30, max: 60 },
+    { label: 'Over $60', min: 60, max: 1000 },
+  ];
 
   // Filtering logic
-  const filteredServices = services.filter((service) => {
+  const filteredServices = processedServices.filter((service) => {
     const genderMatch =
       selectedGender === 'all' ||
       service.gender === selectedGender ||
@@ -189,14 +47,14 @@ const SalonServices = () => {
       selectedCategory === 'all' || service.category === selectedCategory;
     const priceMatch =
       service.price >= selectedPriceRange.min &&
-      (selectedPriceRange.max === 1000 || service.price < selectedPriceRange.max);
+      (selectedPriceRange.max === 1000 || service.price <= selectedPriceRange.max);
 
     return genderMatch && categoryMatch && priceMatch;
   });
 
   // Function to show more services
   const showMoreServices = () => {
-    setVisibleServicesCount(prevCount => prevCount + 6); // Increase by 6 each click
+    setVisibleServicesCount(prevCount => prevCount + 6);
   };
 
   // Function to reset visible services count when filters change
@@ -209,7 +67,7 @@ const SalonServices = () => {
     <button
       onClick={() => {
         onClick();
-        resetVisibleServices(); // Reset visible count when filters change
+        resetVisibleServices();
       }}
       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ease-in-out ${
         active
@@ -219,6 +77,37 @@ const SalonServices = () => {
     >
       {label}
     </button>
+  );
+
+  // SVG icon for the filter button
+  const FilterIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="w-6 h-6"
+    >
+      <path
+        fillRule="evenodd"
+        d="M3.798 2.378A.75.75 0 014.5 2.25h15a.75.75 0 01.708.91l-6.425 14.852a.75.75 0 01-.137.28L8.643 20.94a.75.75 0 01-1.342-.238l-4.14-11.666a.75.75 0 01.64-1.071zm3.842 10.999a.75.75 0 01.32-.47l.95-.568V7.5a.75.75 0 011.5 0v5.303l.95.568a.75.75 0 01-.32.47l-1.9 1.139a.75.75 0 01-.762 0l-1.9-1.139a.75.75 0 01-.32-.47z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+
+  const CloseIcon = () => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className="w-6 h-6"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
+        clipRule="evenodd"
+      />
+    </svg>
   );
 
   return (
@@ -292,12 +181,12 @@ const SalonServices = () => {
                     label="All Services"
                     active={selectedCategory === 'all'}
                   />
-                  {uniqueServices.map((service) => (
+                  {uniqueCategories.map((category) => (
                     <FilterButton
-                      key={service}
-                      onClick={() => setSelectedCategory(service)}
-                      label={service}
-                      active={selectedCategory === service}
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      label={category}
+                      active={selectedCategory === category}
                     />
                   ))}
                 </div>
@@ -346,6 +235,10 @@ const SalonServices = () => {
                     </span>
                   </div>
                   <p className="text-gray-600 text-sm mt-1">{service.description}</p>
+                  
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">By: {service.salon_name}</p>
+                  </div>
                   
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">

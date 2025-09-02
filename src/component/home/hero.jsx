@@ -34,7 +34,7 @@ const ChevronLeft = () => (
   </svg>
 );
 
-const services = [
+const servicesTepm = [
   {
     id: 1,
     title: "Expert Hair Styling",
@@ -65,10 +65,10 @@ const services = [
   },
 ];
 
-export default function SalonSlider() {
+export default function SalonSlider({sliders}) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const totalSlides = services.length;
-
+  const totalSlides =sliders.length || services.length;
+  const services = sliders || servicesTepm
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % totalSlides);
   };
@@ -114,7 +114,7 @@ export default function SalonSlider() {
                       {service.title}
                     </h2>
                     <p className="text-lg md:text-xl text-white/90 font-medium">
-                      {service.subtitle}
+                      {service.description || service.subtitle}
                     </p>
                     <a
                       href={service.link}

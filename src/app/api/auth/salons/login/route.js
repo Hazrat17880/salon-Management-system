@@ -57,6 +57,7 @@ export async function POST(request) {
 
     // Verify password
     const isMatch = await bcrypt.compare(password, salon.password_hash);
+
     if (!isMatch) {
       return createResponse(
         { success: false, message: 'Invalid credentials' },

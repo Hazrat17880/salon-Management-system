@@ -222,6 +222,19 @@ CREATE TABLE IF NOT EXISTS complaints (
   INDEX (is_read)
 );
 `)
+
+// ________________________________ FOR SLIDER _____________________________________
+await query(`
+  CREATE TABLE IF NOT EXISTS sliders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    description TEXT,
+    image VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )
+`);
     console.log('Database initialized');
   } catch (error) {
     console.error('Database initialization failed:', error);

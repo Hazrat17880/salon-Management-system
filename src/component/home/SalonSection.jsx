@@ -2,101 +2,43 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
-const salons = [
-  {
-    id: 1,
-    name: 'Glamour Beauty Salon',
-    image: '/salon1.jpg',
-    location: 'Downtown Lahore',
-    gender: 'female',
-    services: ['Hair Cutting', 'Facial', 'Manicure'],
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    name: 'Elegant Cuts',
-    image: '/salon2.jpg',
-    location: 'Gulberg, Lahore',
-    gender: 'male',
-    services: ['Hair Cutting', 'Beard Trim', 'Facial'],
-    rating: 4.5,
-  },
-  {
-    id: 3,
-    name: 'Style Studio',
-    image: '/salon3.jpg',
-    location: 'Model Town',
-    gender: 'unisex',
-    services: ['Hair Cutting', 'Facial'],
-    rating: 4.2,
-  },
-  {
-    id: 4,
-    name: 'Luxury Spa & Salon',
-    image: '/salon1.jpg',
-    location: 'DHA Phase 5',
-    gender: 'female',
-    services: ['Hair Cutting', 'Facial', 'Manicure', 'Pedicure'],
-    rating: 4.9,
-  },
-  {
-    id: 5,
-    name: 'Gentlemen\'s Grooming',
-    image: '/salon2.jpg',
-    location: 'Bahria Town',
-    gender: 'male',
-    services: ['Hair Cutting', 'Beard Trim', 'Hot Towel Shave'],
-    rating: 4.7,
-  },
-  {
-    id: 6,
-    name: 'Urban Style Lounge',
-    image: '/salon3.jpg',
-    location: 'Faisal Town',
-    gender: 'unisex',
-    services: ['Hair Cutting', 'Hair Coloring', 'Keratin Treatment'],
-    rating: 4.4,
-  },
-  {
-    id: 7,
-    name: 'The Beauty Parlor',
-    image: '/salon1.jpg',
-    location: 'Johar Town',
-    gender: 'female',
-    services: ['Bridal Makeup', 'Hair Styling', 'Mehndi'],
-    rating: 4.6,
-  },
-  {
-    id: 8,
-    name: 'Executive Cuts',
-    image: '/salon2.jpg',
-    location: 'Garden Town',
-    gender: 'male',
-    services: ['Hair Cutting', 'Facial', 'Head Massage'],
-    rating: 4.3,
-  },
-  {
-    id: 9,
-    name: 'Hair Masters',
-    image: '/salon3.jpg',
-    location: 'Wapda Town',
-    gender: 'unisex',
-    services: ['Hair Cutting', 'Hair Treatments', 'Extensions'],
-    rating: 4.5,
-  },
-];
-
-const uniqueServices = Array.from(
-  new Set(salons.flatMap((salon) => salon.services))
-);
-
-const SalonList = () => {
+const SalonList = ({ salons = [] }) => {
   const [selectedGender, setSelectedGender] = useState('');
   const [selectedService, setSelectedService] = useState('');
-  const [visibleCount, setVisibleCount] = useState(6); // Initial number of salons to show
+  const [visibleCount, setVisibleCount] = useState(6);
 
-  const filteredSalons = salons.filter((salon) => {
+  // Process API data to match expected format
+  const processedSalons = salons.map(salon => ({
+    id: salon.id,
+    name: salon.salon_name,
+    image: salon.image || '/default-salon.jpg',
+    location: `${salon.city}, ${salon.state}`,
+    gender: 'unisex', // Default since API doesn't have gender field
+    services: ['Hair Cutting', 'Facial', 'Manicure'], // Placeholder - you might want to get actual services
+    rating: salon.avg_rating || 4.0,
+    total_reviews: salon.total_reviews || 0,
+    total_favorites: salon.total_favorites || 0,
+    description: salon.description,
+    owner_name: salon.owner_name,
+    opening_hours: salon.opening_hours,
+    days: salon.days
+  }));
+
+  // Extract unique services from all salons (placeholder - you might want to get actual services from API)
+  const uniqueServices = [
+    'Hair Cutting',
+    'Facial',
+    'Manicure',
+    'Pedicure',
+    'Beard Trim',
+    'Hair Coloring',
+    'Massage',
+    'Makeup'
+  ];
+
+  const filteredSalons = processedSalons.filter((salon) => {
     const genderMatch =
       !selectedGender ||
       salon.gender === selectedGender ||
@@ -107,12 +49,10 @@ const SalonList = () => {
     return genderMatch && serviceMatch;
   });
 
-  // Function to show more salons
   const showMoreSalons = () => {
-    setVisibleCount(prevCount => prevCount + 3); // Increase by 3 each click
+    setVisibleCount(prevCount => prevCount + 3);
   };
 
-  // Reset visible count when filters change
   const resetVisibleCount = () => {
     setVisibleCount(6);
   };
@@ -193,6 +133,9 @@ const SalonList = () => {
                   </svg>
                   {salon.rating}
                 </div>
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-semibold">
+                  {salon.total_reviews} reviews
+                </div>
               </div>
               <div className="p-5 flex-grow">
                 <div className="flex justify-between items-start">
@@ -201,48 +144,73 @@ const SalonList = () => {
                     {salon.gender}
                   </span>
                 </div>
-                <div className="flex items-center text-gray-600 mb-3">
+                
+                <div className="flex items-center text-gray-600 mb-2">
                   <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
                   <span className="text-sm">{salon.location}</span>
                 </div>
+
+                {salon.owner_name && (
+                  <div className="flex items-center text-gray-600 mb-3">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm">Owner: {salon.owner_name}</span>
+                  </div>
+                )}
                 
                 <div className="mt-4">
                   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Services</h4>
                   <div className="flex flex-wrap gap-2">
-                    {salon.services.map((service) => (
+                    {salon.services.slice(0, 3).map((service) => (
                       <span key={service} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
                         {service}
                       </span>
                     ))}
+                    {salon.services.length > 3 && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                        +{salon.services.length - 3} more
+                      </span>
+                    )}
                   </div>
                 </div>
+
+                {salon.opening_hours && (
+                  <div className="mt-3 flex items-center text-sm text-gray-600">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    <span>{salon.opening_hours}</span>
+                  </div>
+                )}
               </div>
             </div>
           </Link>
         ))}
       </div>
 
-      {/* Show More Button - Only visible if there are more salons to show */}
-     {filteredSalons.length > visibleCount && (
-  <div className="mt-12 flex justify-center">
-    <button
-      onClick={showMoreSalons}
-      className="flex items-center px-6 py-3 bg-white border border-indigo-100 text-indigo-600 font-medium rounded-full shadow-sm hover:shadow-md hover:bg-indigo-50 transition-all duration-300"
-    >
-      Show More Salons
-      <svg 
-        className="w-4 h-4 ml-2 transition-transform duration-300 hover:translate-x-1" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-      </svg>
-    </button>
-  </div>
-)}
+      {/* Show More Button */}
+      {filteredSalons.length > visibleCount && (
+        <div className="mt-12 flex justify-center">
+          <button
+            onClick={showMoreSalons}
+            className="flex items-center px-6 py-3 bg-white border border-indigo-100 text-indigo-600 font-medium rounded-full shadow-sm hover:shadow-md hover:bg-indigo-50 transition-all duration-300"
+          >
+            Show More Salons
+            <svg 
+              className="w-4 h-4 ml-2 transition-transform duration-300 hover:translate-x-1" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+            </svg>
+          </button>
+        </div>
+      )}
+
       {filteredSalons.length === 0 && (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

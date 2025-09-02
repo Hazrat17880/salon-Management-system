@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { query } from '@/lib/dbConnection';
 import generateOTP from '@/utils/otp';
 import { cookies } from 'next/headers';
+import { sendOTPEmail } from '@/utils/sendEmail';
 
 // Helper functions (keep the same)
 const createResponse = (data, status = 200) => 
@@ -125,7 +126,10 @@ export async function POST(request) {
     );
 
     // In production, you would send the OTP via email
-    console.log('OTP Code:', otp_code);
+    
+    // send email
+    // let send = await sendOTPEmail(userData.email, userData.full_name, otp_code,'Verify You Account.')
+    // console.log('OTP Code:', otp_code, send);
 
     // Get the created user (without sensitive data)
     const [newUser] = await query(
@@ -147,7 +151,7 @@ export async function POST(request) {
     );
 
     // Set email cookie for verification
-    cookies().set({
+    await cookies().set({
       name: 'user_email',
       value: userData.email,
       httpOnly: true,
