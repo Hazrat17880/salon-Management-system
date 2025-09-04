@@ -12,6 +12,7 @@
     "@glidejs/glide": "^3.7.1",
     "@next/font": "^14.2.15",
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.7.0",
     "framer-motion": "^12.23.11",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",

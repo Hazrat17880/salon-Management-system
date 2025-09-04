@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS favorite_salon (
 
   `)
   // APPOINTEMENT 
-  await query(`
+ await query(`
 CREATE TABLE IF NOT EXISTS appointment (
     id INT AUTO_INCREMENT PRIMARY KEY,
     salon_id INT NOT NULL,
@@ -173,14 +173,15 @@ CREATE TABLE IF NOT EXISTS appointment (
     appointment_time TIME NOT NULL,
     accept BOOLEAN DEFAULT false,
     appointment_status ENUM('pending', 'completed', 'rejected', 'accept') DEFAULT 'pending',
-    user_view BOOLEAN default false,
-    salon_view BOOLEAN default false,
+    user_view BOOLEAN DEFAULT false,
+    salon_view BOOLEAN DEFAULT false,
+    image VARCHAR(255), -- to store image URL or path
     FOREIGN KEY (services_id) REFERENCES salon_services(id) ON DELETE CASCADE,
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+`);
 
-  `)
 
 // converstion
 await query(`

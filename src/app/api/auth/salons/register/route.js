@@ -4,6 +4,7 @@ import generateOTP from '@/utils/otp';
 import { cookies } from 'next/headers';
 import fs from 'fs/promises';
 import path from 'path';
+import { sendOTPEmail } from '@/utils/sendEmail';
 
 // Configure upload directory
 const UPLOAD_DIR = path.join(process.cwd(), 'public/uploads/salons');
@@ -273,6 +274,14 @@ export async function POST(request) {
     });
 
     // TODO: Send verification email with OTP code
+    // Send OTP email (critical fix ✅)
+        await sendOTPEmail(
+          salonData.email,
+          salonData.salon_name,
+          otp_code,
+          "Verify Your Salon  Account within 15 minutes – YongSMS"
+        );
+    
 
     return createResponse(
       { 

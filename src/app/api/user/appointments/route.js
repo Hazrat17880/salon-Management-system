@@ -93,6 +93,17 @@
 import { withUserAuth } from "@/lib/authUser";
 import { query } from "@/lib/dbConnection";
 import { NextResponse } from "next/server";
+import { v2 as cloudinary } from "cloudinary";
+
+
+
+// ✅ Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 
 // ----------------------- GET (User's Appointments) -----------------------
 export const GET = withUserAuth(async (req) => {
@@ -139,18 +150,24 @@ export const GET = withUserAuth(async (req) => {
 // ----------------------- POST (Create Appointment) -----------------------
 export const POST = withUserAuth(async (req) => {
   const userId = req.user.id;
-  const body = await req.json();
-  const { salon_id, service_id, date, time } = body;
-
-  if (!salon_id || !service_id || !date || !time) {
-    return NextResponse.json(
-      { success: false, message: "All fields are required" },
-      { status: 400 }
-    );
-  }
 
   try {
-    // Ensure the service belongs to the salon (basic integrity check)
+    // ✅ Extract form-data instead of JSON because we are handling file upload
+    const formData = await req.formData();
+    const salon_id = formData.get("salon_id");
+    const service_id = formData.get("service_id");
+    const date = formData.get("date");
+    const time = formData.get("time");
+    const imageFile = formData.get("image"); // expecting <input type="file" name="image" />
+
+    if (!salon_id || !service_id || !date || !time) {
+      return NextResponse.json(
+        { success: false, message: "All fields are required" },
+        { status: 400 }
+      );
+    }
+
+    // Ensure the service belongs to the salon
     const svc = await query(
       `SELECT id FROM salon_services WHERE id = ? AND salon_id = ? LIMIT 1`,
       [service_id, salon_id]
@@ -162,7 +179,7 @@ export const POST = withUserAuth(async (req) => {
       );
     }
 
-    // Prevent double booking for the same salon/date/time
+    // Prevent double booking
     const existing = await query(
       `
       SELECT id FROM appointment
@@ -178,17 +195,41 @@ export const POST = withUserAuth(async (req) => {
       );
     }
 
+    let imageUrl = null;
+    if (imageFile && imageFile.name) {
+      const arrayBuffer = await imageFile.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // ✅ Upload to Cloudinary
+      const uploadRes = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "appointments" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(buffer);
+      });
+
+      imageUrl = uploadRes.secure_url;
+    }
+
+    // ✅ Insert appointment with image URL
     await query(
       `
       INSERT INTO appointment 
-        (salon_id, user_id, services_id, appointment_date, appointment_time, appointment_status, accept, user_view)
+        (salon_id, user_id, services_id, appointment_date, appointment_time, appointment_status, accept, user_view, image)
       VALUES 
-        (?, ?, ?, ?, ?, 'pending', false, ?)
+        (?, ?, ?, ?, ?, 'pending', false, ?, ?)
       `,
-      [salon_id, userId, service_id, date, time, true]
+      [salon_id, userId, service_id, date, time, true, imageUrl]
     );
 
-    return NextResponse.json({ success: true, message: "Appointment booked successfully!" });
+    return NextResponse.json({
+      success: true,
+      message: "Appointment booked successfully!",
+    });
   } catch (error) {
     console.error("Error creating appointment:", error);
     return NextResponse.json(

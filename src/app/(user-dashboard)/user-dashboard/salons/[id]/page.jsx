@@ -1,10 +1,22 @@
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { MapPin, Phone, Scissors, X, MessageCircle, AlertTriangle, Star, Edit2, Trash2, Users, Calendar, Heart } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Scissors,
+  X,
+  MessageCircle,
+  AlertTriangle,
+  Star,
+  Edit2,
+  Trash2,
+  Users,
+  Calendar,
+  Heart,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import FavoriteSalon from "@/component/Customer/FavoriteSalon";
 
@@ -29,7 +41,7 @@ export default function SalonDetails() {
   const [complaintModal, setComplaintModal] = useState(false);
   const [complaintText, setComplaintText] = useState("");
   const [complaintType, setComplaintType] = useState("");
-  
+
   // Review state
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewTitle, setReviewTitle] = useState("");
@@ -42,13 +54,14 @@ export default function SalonDetails() {
   const [deleteConfirmModal, setDeleteConfirmModal] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [appointmentImage, setAppointmentImage] = useState(null);
 
   const ref = useRef(false);
   const router = useRouter();
 
   const fetchData = async () => {
     try {
-      const res =  await fetch(`/api/user/salons/salon/?id=${id}`);
+      const res = await fetch(`/api/user/salons/salon/?id=${id}`);
       if (res.status === 401) {
         localStorage.clear();
         toast.warning("Your session is expired.");
@@ -80,7 +93,7 @@ export default function SalonDetails() {
       if (data.success) {
         setUserReviews(data.data);
         calculateAverageRating(data.data);
-        setCurrentUserId(data.userid)
+        setCurrentUserId(data.userid);
       }
     } catch (error) {
       console.error("Failed to fetch reviews", error);
@@ -94,7 +107,7 @@ export default function SalonDetails() {
       setTotalReviews(0);
       return;
     }
-    
+
     const total = reviews.reduce((sum, review) => sum + review.stars, 0);
     const average = total / reviews.length;
     setAverageRating(average);
@@ -120,7 +133,9 @@ export default function SalonDetails() {
     }
 
     try {
-      const url = editingReview ? `/api/user/review?id=${editingReview.id}` : "/api/user/review";
+      const url = editingReview
+        ? `/api/user/review?id=${editingReview.id}`
+        : "/api/user/review";
       const method = editingReview ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -130,13 +145,17 @@ export default function SalonDetails() {
           salon_id: salon.id,
           title: reviewTitle,
           review: reviewText,
-          stars: reviewStars
+          stars: reviewStars,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        toast.success(editingReview ? "Review updated successfully" : "Review submitted successfully");
+        toast.success(
+          editingReview
+            ? "Review updated successfully"
+            : "Review submitted successfully"
+        );
         resetReviewForm();
         setReviewModal(false);
         fetchReviews();
@@ -210,8 +229,8 @@ export default function SalonDetails() {
             <Star
               className={`w-6 h-6 ${
                 star <= reviewStars
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300'
+                  ? "text-yellow-400 fill-current"
+                  : "text-gray-300"
               }`}
             />
           </button>
@@ -226,9 +245,7 @@ export default function SalonDetails() {
       <Star
         key={index}
         className={`w-4 h-4 ${
-          index < rating
-            ? 'text-yellow-400 fill-current'
-            : 'text-gray-300'
+          index < rating ? "text-yellow-400 fill-current" : "text-gray-300"
         }`}
       />
     ));
@@ -238,7 +255,9 @@ export default function SalonDetails() {
   const fetchMessages = async () => {
     if (!salon) return;
     try {
-      const res = await fetch(`/api/user/chats/chat-from-salon/?salon_id=${salon.id}`);
+      const res = await fetch(
+        `/api/user/chats/chat-from-salon/?salon_id=${salon.id}`
+      );
       const data = await res.json();
       setConversationId(data.conversation_id);
       if (data.success) {
@@ -306,6 +325,7 @@ export default function SalonDetails() {
   };
 
   // handle appointment
+  // Update the handler
   const handleBookAppointment = async () => {
     if (!appointmentDate || !appointmentTime) {
       toast.error("Please select both date and time");
@@ -313,17 +333,18 @@ export default function SalonDetails() {
     }
 
     try {
+      const formData = new FormData();
+      formData.append("salon_id", salon.id);
+      formData.append("service_id", selectedService.id);
+      formData.append("date", appointmentDate);
+      formData.append("time", appointmentTime);
+      if (appointmentImage) {
+        formData.append("image", appointmentImage); // attach image file
+      }
+
       const res = await fetch("/api/user/appointments", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          salon_id: salon.id,
-          service_id: selectedService.id,
-          date: appointmentDate,
-          time: appointmentTime,
-        }),
+        body: formData, // send multipart form data
       });
 
       const data = await res.json();
@@ -333,17 +354,20 @@ export default function SalonDetails() {
         setSelectedService(null);
         setAppointmentDate("");
         setAppointmentTime("");
+        setAppointmentImage(null);
       } else {
         toast.error(data.message || "Failed to book appointment");
       }
     } catch (error) {
       console.error("Failed to book appointment", error);
       toast.error("Error booking appointment");
-    } 
+    }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading salon details...</div>;
-  if (!salon) return <div className="p-10 text-center text-red-500">Salon not found</div>;
+  if (loading)
+    return <div className="p-10 text-center">Loading salon details...</div>;
+  if (!salon)
+    return <div className="p-10 text-center text-red-500">Salon not found</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -387,7 +411,9 @@ export default function SalonDetails() {
                 <Phone size={18} /> {salon.phone}
               </span>
             </div>
-            <p className="mt-3 text-white/90 line-clamp-2">{salon.description}</p>
+            <p className="mt-3 text-white/90 line-clamp-2">
+              {salon.description}
+            </p>
 
             {/* Action Buttons */}
             <div className="flex gap-3 mt-4 flex-wrap">
@@ -398,7 +424,8 @@ export default function SalonDetails() {
                   if (!chatOpen) fetchMessages();
                 }}
               >
-                <MessageCircle size={20} /> {chatOpen ? "Close Chat" : "Chat with Salon"}
+                <MessageCircle size={20} />{" "}
+                {chatOpen ? "Close Chat" : "Chat with Salon"}
               </button>
 
               <button
@@ -426,9 +453,24 @@ export default function SalonDetails() {
       <div className="bg-white rounded-2xl shadow-lg p-1 mb-8">
         <div className="flex space-x-1">
           {[
-            { id: "services", label: "Services", icon: Scissors, count: services.length },
-            { id: "reviews", label: "Reviews", icon: Star, count: totalReviews },
-            { id: "staff", label: "Our Team", icon: Users, count: staff.length }
+            {
+              id: "services",
+              label: "Services",
+              icon: Scissors,
+              count: services.length,
+            },
+            {
+              id: "reviews",
+              label: "Reviews",
+              icon: Star,
+              count: totalReviews,
+            },
+            {
+              id: "staff",
+              label: "Our Team",
+              icon: Users,
+              count: staff.length,
+            },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -441,11 +483,13 @@ export default function SalonDetails() {
             >
               <tab.icon size={18} />
               {tab.label}
-              <span className={`px-2 py-1 rounded-full text-xs ${
-                activeTab === tab.id 
-                  ? "bg-white/20 text-white" 
-                  : "bg-gray-200 text-gray-700"
-              }`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs ${
+                  activeTab === tab.id
+                    ? "bg-white/20 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
                 {tab.count}
               </span>
             </button>
@@ -494,7 +538,7 @@ export default function SalonDetails() {
                       <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                         ⏱️ {service.duration || "30 min"}
                       </span>
-                      <button 
+                      <button
                         className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -524,11 +568,15 @@ export default function SalonDetails() {
               <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl p-6 mb-6">
                 <div className="flex items-center justify-between">
                   <div className="text-center">
-                    <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
+                    <div className="text-4xl font-bold">
+                      {averageRating.toFixed(1)}
+                    </div>
                     <div className="flex justify-center gap-0.5 mt-2">
                       {renderStars(Math.round(averageRating))}
                     </div>
-                    <div className="text-sm opacity-90 mt-1">{totalReviews} reviews</div>
+                    <div className="text-sm opacity-90 mt-1">
+                      {totalReviews} reviews
+                    </div>
                   </div>
                   <button
                     onClick={() => {
@@ -575,16 +623,24 @@ export default function SalonDetails() {
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                           {review.image ? (
-                            <img src={review.image} alt="User" className="w-full h-full object-cover rounded-full" />
+                            <img
+                              src={review.image}
+                              alt="User"
+                              className="w-full h-full object-cover rounded-full"
+                            />
                           ) : (
                             <span className="text-indigo-600 font-medium text-lg">
-                              {review.full_name ? review.full_name.charAt(0).toUpperCase() : 'U'}
+                              {review.full_name
+                                ? review.full_name.charAt(0).toUpperCase()
+                                : "U"}
                             </span>
                           )}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-gray-900">{review.full_name || 'Anonymous'}</h4>
+                            <h4 className="font-semibold text-gray-900">
+                              {review.full_name || "Anonymous"}
+                            </h4>
                             <span className="text-sm text-gray-500">
                               {new Date(review.created_at).toLocaleDateString()}
                             </span>
@@ -592,8 +648,12 @@ export default function SalonDetails() {
                           <div className="flex gap-0.5 mb-3">
                             {renderStars(review.stars)}
                           </div>
-                          <h5 className="font-semibold text-lg mb-2 text-gray-900">{review.title}</h5>
-                          <p className="text-gray-700 leading-relaxed">{review.review}</p>
+                          <h5 className="font-semibold text-lg mb-2 text-gray-900">
+                            {review.title}
+                          </h5>
+                          <p className="text-gray-700 leading-relaxed">
+                            {review.review}
+                          </p>
                         </div>
                       </div>
                     </motion.div>
@@ -601,8 +661,12 @@ export default function SalonDetails() {
                 ) : (
                   <div className="text-center py-12 bg-white rounded-2xl shadow-md">
                     <Star className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-600 mb-2">No reviews yet</h3>
-                    <p className="text-gray-500 mb-4">Be the first to share your experience!</p>
+                    <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                      No reviews yet
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      Be the first to share your experience!
+                    </p>
                     <button
                       onClick={() => {
                         resetReviewForm();
@@ -638,8 +702,8 @@ export default function SalonDetails() {
                       <div className="relative mb-4">
                         <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
                           {staffMember.image ? (
-                            <img 
-                              src={staffMember.image} 
+                            <img
+                              src={staffMember.image}
                               alt={staffMember.title}
                               className="w-full h-full object-cover"
                             />
@@ -648,13 +712,19 @@ export default function SalonDetails() {
                           )}
                         </div>
                       </div>
-                      <h3 className="font-semibold text-lg mb-2 text-gray-900">{staffMember.title}</h3>
+                      <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                        {staffMember.title}
+                      </h3>
                       <div className="w-12 h-1 bg-gradient-to-r from-indigo-400 to-purple-400 mx-auto mb-3"></div>
                       <p className="text-sm text-gray-500">
-                        Member since {new Date(staffMember.created_at).toLocaleDateString('en-US', { 
-                          year: 'numeric', 
-                          month: 'long' 
-                        })}
+                        Member since{" "}
+                        {new Date(staffMember.created_at).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                          }
+                        )}
                       </p>
                     </motion.div>
                   ))}
@@ -662,8 +732,12 @@ export default function SalonDetails() {
               ) : (
                 <div className="text-center py-12 bg-white rounded-2xl shadow-md">
                   <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">No staff members yet</h3>
-                  <p className="text-gray-500">Check back later to meet our team!</p>
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                    No staff members yet
+                  </h3>
+                  <p className="text-gray-500">
+                    Check back later to meet our team!
+                  </p>
                 </div>
               )}
             </motion.div>
@@ -695,14 +769,20 @@ export default function SalonDetails() {
 
             {/* Star Rating */}
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Your Rating</label>
+              <label className="block text-gray-700 font-medium mb-2">
+                Your Rating
+              </label>
               {renderStarInput()}
-              <p className="text-sm text-gray-500">{reviewStars} star{reviewStars !== 1 ? 's' : ''}</p>
+              <p className="text-sm text-gray-500">
+                {reviewStars} star{reviewStars !== 1 ? "s" : ""}
+              </p>
             </div>
 
             {/* Review Title */}
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Review Title</label>
+              <label className="block text-gray-700 font-medium mb-2">
+                Review Title
+              </label>
               <input
                 type="text"
                 className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -714,9 +794,11 @@ export default function SalonDetails() {
 
             {/* Review Text */}
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Your Review</label>
+              <label className="block text-gray-700 font-medium mb-2">
+                Your Review
+              </label>
               <textarea
-                            className="w-full border rounded-lg p-3 h-32 resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full border rounded-lg p-3 h-32 resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 placeholder="Share your experience with this salon..."
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
@@ -756,7 +838,8 @@ export default function SalonDetails() {
               </div>
               <h3 className="text-xl font-bold mb-2">Delete Review</h3>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete your review? This action cannot be undone.
+                Are you sure you want to delete your review? This action cannot
+                be undone.
               </p>
             </div>
 
@@ -795,7 +878,9 @@ export default function SalonDetails() {
 
             <h3 className="text-xl font-bold mb-4">Submit a Complaint</h3>
 
-            <label className="block mb-2 text-gray-700 font-medium">Complaint About</label>
+            <label className="block mb-2 text-gray-700 font-medium">
+              Complaint About
+            </label>
             <select
               className="w-full border rounded-lg p-3 mb-4 focus:ring-2 focus:ring-red-500 focus:outline-none"
               value={complaintType}
@@ -874,15 +959,21 @@ export default function SalonDetails() {
               <X size={24} />
             </button>
             <h3 className="text-xl font-bold mb-4">Book Appointment</h3>
-            
+
             {selectedService && (
               <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
-                <h4 className="font-semibold text-indigo-800 mb-2">Service: {selectedService.name}</h4>
-                <p className="text-indigo-600">Price: ${selectedService.price}</p>
-                <p className="text-indigo-600">Duration: {selectedService.duration || "30 min"}</p>
+                <h4 className="font-semibold text-indigo-800 mb-2">
+                  Service: {selectedService.name}
+                </h4>
+                <p className="text-indigo-600">
+                  Price: ${selectedService.price}
+                </p>
+                <p className="text-indigo-600">
+                  Duration: {selectedService.duration || "30 min"}
+                </p>
               </div>
             )}
-            
+
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-gray-600 mb-1">Date</label>
@@ -891,7 +982,7 @@ export default function SalonDetails() {
                   className="w-full border rounded-lg p-2"
                   value={appointmentDate}
                   onChange={(e) => setAppointmentDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={new Date().toISOString().split("T")[0]}
                 />
               </div>
               <div>
@@ -903,6 +994,18 @@ export default function SalonDetails() {
                   onChange={(e) => setAppointmentTime(e.target.value)}
                 />
               </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Upload Reference Image (optional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setAppointmentImage(e.target.files[0])}
+                  className="w-full border rounded-lg p-3"
+                />
+              </div>
+
               <button
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 rounded-xl hover:from-green-700 hover:to-emerald-700 transition"
                 onClick={handleBookAppointment}
@@ -925,13 +1028,21 @@ export default function SalonDetails() {
             exit={{ x: "100%" }}
           >
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-              <h3 className="text-lg font-semibold">Chat with {salon.salon_name}</h3>
-              <button onClick={() => setChatOpen(false)} className="text-white hover:text-gray-200">
+              <h3 className="text-lg font-semibold">
+                Chat with {salon.salon_name}
+              </h3>
+              <button
+                onClick={() => setChatOpen(false)}
+                className="text-white hover:text-gray-200"
+              >
                 <X size={24} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2" ref={ref}>
+            <div
+              className="flex-1 overflow-y-auto p-4 flex flex-col gap-2"
+              ref={ref}
+            >
               {messages.length === 0 ? (
                 <div className="text-center mt-10 text-gray-500">
                   <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -950,9 +1061,13 @@ export default function SalonDetails() {
                     }`}
                   >
                     {msg.message}
-                    <div className={`text-xs mt-1 ${
-                      msg.sender_type === "user" ? "text-indigo-100" : "text-gray-500"
-                    }`}>
+                    <div
+                      className={`text-xs mt-1 ${
+                        msg.sender_type === "user"
+                          ? "text-indigo-100"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {new Date(msg.created_at).toLocaleTimeString()}
                     </div>
                   </motion.div>
@@ -967,7 +1082,7 @@ export default function SalonDetails() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               />
               <button
                 onClick={sendMessage}
