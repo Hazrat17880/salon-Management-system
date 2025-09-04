@@ -52,40 +52,49 @@ export default function UserSignupPage() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    const newForm = new FormData();
-    newForm.append('fullName', formData.fullName);
-    newForm.append('email', formData.email);
-    newForm.append('password', formData.password);
-    newForm.append('phone', formData.phone);
-    newForm.append('dateOfBirth', formData.dateOfBirth);
-    newForm.append('gender', formData.gender);
-    newForm.append('address', formData.address);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/auth/user/register', {
-        method: 'POST',
-        body: newForm,
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Registration successful! Please verify your email.');
-        router.push('/user/otp-verification');
-      } else {
-        toast.error(data.message || 'Registration failed');
-      }
-    } catch (error) {
-      toast.error('An error occurred during registration');
-      console.error('Error:', error);
-    } finally {
-      setIsLoading(false);
+  try {
+    const newForm = new FormData();
+    newForm.append("fullName", formData.fullName);
+    newForm.append("email", formData.email);
+    newForm.append("password", formData.password);
+    newForm.append("phone", formData.phone);
+    newForm.append("dateOfBirth", formData.dateOfBirth);
+    newForm.append("gender", formData.gender);
+    newForm.append("address", formData.address);
+
+    const response = await fetch("/api/auth/user/register", {
+      method: "POST",
+      body: newForm,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Save email in localStorage for OTP verification
+      localStorage.setItem(
+        "forgotData",
+        JSON.stringify({
+          email: formData.email,
+          purpose: "signup",
+        })
+      );
+
+      toast.success("Registration successful! Please verify your email.");
+      router.push("/user/otp-verification");
+    } else {
+      toast.error(data?.message || "Registration failed");
     }
-  };
+  } catch (error) {
+    console.error("Registration error:", error);
+    toast.error("An error occurred during registration");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
   useEffect(()=>{

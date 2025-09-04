@@ -23,8 +23,9 @@ export async function PUT(req) {
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Trim and hash the new password
+    const trimmedPassword = password.trim();
+    const hashedPassword = await bcrypt.hash(trimmedPassword, 10);
 
     // Update password in salons table
     await query(

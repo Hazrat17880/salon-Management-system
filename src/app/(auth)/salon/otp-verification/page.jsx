@@ -23,7 +23,7 @@ export default function OTPVerification() {
     if (storedData) {
       const forgotData = JSON.parse(storedData);
       setEmail(forgotData.email || "");
-      setPurpose(FormData.purpose)
+      setPurpose(forgotData.purpose)
     
     }
   }, []);

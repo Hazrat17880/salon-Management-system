@@ -66,24 +66,26 @@ export default function Appointments() {
   };
 
   // Reject modal controls
-  const openRejectModal = (appointment) => {
-    setAppointmentToUpdate(appointment);
-    // setIsRejectModalOpen(true);
-    confirmReject()
-  };
+// Reject modal controls
+const openRejectModal = (appointment) => {
+  setAppointmentToUpdate(appointment);   // set which appointment is being rejected
+  setIsRejectModalOpen(true);            // open modal, don't confirm yet
+};
 
-  const closeRejectModal = () => {
-    setIsRejectModalOpen(false);
-    setAppointmentToUpdate(null);
-    setRejectReason("");
-  };
+const closeRejectModal = () => {
+  setIsRejectModalOpen(false);
+  setAppointmentToUpdate(null);
+  setRejectReason("");
+};
 
-  const confirmReject = () => {
-    
-    // sending status reject + accept = false
-    handleAppointmentAction(appointmentToUpdate.id, "rejected", false);
-    closeRejectModal();
-  };
+const confirmReject = () => {
+  if (!appointmentToUpdate) return;  // safety check in case it's null
+
+  // sending status = reject, accept = false
+  handleAppointmentAction(appointmentToUpdate.id, "reject", false);
+  closeRejectModal();
+};
+
 
   // Filtering
   const filteredAppointments =
