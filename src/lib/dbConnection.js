@@ -236,6 +236,21 @@ await query(`
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   )
 `);
+// Add this to your existing initDB function
+await query(`
+  CREATE TABLE IF NOT EXISTS contact_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    is_viewed BOOLEAN DEFAULT FALSE,
+    viewed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX (is_viewed),
+    INDEX (created_at)
+  );
+`);
     console.log('Database initialized');
   } catch (error) {
     console.error('Database initialization failed:', error);

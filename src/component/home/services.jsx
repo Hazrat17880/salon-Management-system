@@ -74,7 +74,7 @@ export default function ServicesSection() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
                 <p className="text-gray-600 mb-4">{feature.description}</p>
-                <Link 
+                {/* <Link 
                   href="/features" 
                   className="inline-flex items-center text-pink-600 font-medium hover:text-pink-700 transition-colors"
                 >
@@ -82,14 +82,14 @@ export default function ServicesSection() {
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
-                </Link>
+                </Link> */}
               </div>
             </div>
           ))}
         </div>
 
         <div className="text-center mt-16">
-          <Link href="/signin">
+          <Link href="/user/signin">
             <button className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-pink-600 hover:bg-pink-700 transition">
               Try it For Free
             </button>

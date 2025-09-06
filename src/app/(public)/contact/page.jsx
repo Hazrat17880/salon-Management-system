@@ -1,10 +1,62 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiMail, FiPhone, FiMapPin, FiClock, FiSend } from 'react-icons/fi';
+import { FiMail, FiPhone, FiMapPin, FiClock, FiSend, FiLoader } from 'react-icons/fi';
 import Image from 'next/image';
+import { useState } from 'react';
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({ success: false, message: '' });
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus({ success: false, message: '' });
+
+    try {
+      const response = await fetch('/api/public/message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitStatus({ success: true, message: 'Message sent successfully!' });
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          message: ''
+        });
+      } else {
+        setSubmitStatus({ success: false, message: data.message || 'Failed to send message. Please try again.' });
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitStatus({ success: false, message: 'An error occurred. Please try again later.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-32 py-5">
       <div className="max-w-6xl w-full bg-white rounded-xl shadow-lg overflow-hidden">
@@ -23,7 +75,14 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <form className="space-y-6">
+            {/* Status Message */}
+            {submitStatus.message && (
+              <div className={`mb-4 p-3 rounded-lg ${submitStatus.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {submitStatus.message}
+              </div>
+            )}
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                   Full Name
@@ -31,6 +90,8 @@ export default function ContactPage() {
                 <input
                   type="text"
                   id="name"
+                  value={formData.name}
+                  onChange={handleChange}
                   className="mt-1 w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   placeholder="e.g., Sarah Khan"
                   required
@@ -44,6 +105,8 @@ export default function ContactPage() {
                 <input
                   type="email"
                   id="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   className="mt-1 w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   placeholder="you@example.com"
                   required
@@ -57,6 +120,8 @@ export default function ContactPage() {
                 <textarea
                   id="message"
                   rows={4}
+                  value={formData.message}
+                  onChange={handleChange}
                   className="mt-1 w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   placeholder="Let us know how we can assist you..."
                   required
@@ -67,10 +132,20 @@ export default function ContactPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center"
+                disabled={isSubmitting}
+                className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center"
               >
-                <span>Send Message</span>
-                <FiSend className="ml-2" />
+                {isSubmitting ? (
+                  <>
+                    <FiLoader className="animate-spin mr-2" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send Message</span>
+                    <FiSend className="ml-2" />
+                  </>
+                )}
               </motion.button>
             </form>
           </motion.div>
@@ -93,36 +168,35 @@ export default function ContactPage() {
             </div>
 
             {/* Info Block */}
-        <div className="bg-white p-6 md:p-10 lg:p-12 w-full max-w-xl">
-  <h2 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h2>
-  
-  <div className="space-y-6">
-    <ContactInfo 
-      icon={<FiMail className="text-primary w-5 h-5" />} 
-      title="Email Us" 
-      text="support@glamsalon.com" 
-    />
-    
-    <ContactInfo 
-      icon={<FiPhone className="text-primary w-5 h-5" />} 
-      title="Call Us" 
-      text="+92 300 1234567" 
-    />
-    
-    <ContactInfo 
-      icon={<FiMapPin className="text-primary w-5 h-5" />} 
-      title="Visit Us" 
-      text="Plot 456, Gulberg III, Lahore, Pakistan" 
-    />
-    
-    <ContactInfo 
-      icon={<FiClock className="text-primary w-5 h-5" />} 
-      title="Working Hours" 
-      text="Mon–Sat: 10:00 AM – 8:00 PM" 
-    />
-  </div>
-</div>
-
+            <div className="bg-white p-6 md:p-10 lg:p-12 w-full max-w-xl">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+              
+              <div className="space-y-6">
+                <ContactInfo 
+                  icon={<FiMail className="text-emerald-600 w-5 h-5" />} 
+                  title="Email Us" 
+                  text="support@glamsalon.com" 
+                />
+                
+                <ContactInfo 
+                  icon={<FiPhone className="text-emerald-600 w-5 h-5" />} 
+                  title="Call Us" 
+                  text="+92 300 1234567" 
+                />
+                
+                <ContactInfo 
+                  icon={<FiMapPin className="text-emerald-600 w-5 h-5" />} 
+                  title="Visit Us" 
+                  text="Plot 456, Gulberg III, Lahore, Pakistan" 
+                />
+                
+                <ContactInfo 
+                  icon={<FiClock className="text-emerald-600 w-5 h-5" />} 
+                  title="Working Hours" 
+                  text="Mon–Sat: 10:00 AM – 8:00 PM" 
+                />
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

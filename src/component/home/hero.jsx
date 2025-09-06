@@ -100,7 +100,7 @@ export default function SalonSlider({ sliders }) {
                       {service.description || service.subtitle}
                     </p>
                     <a
-                      href={service.link}
+                      href={"/services"}
                       className="mt-6 inline-flex items-center justify-center gap-2 px-8 py-4 text-white font-semibold bg-gradient-to-r from-pink-500 to-fuchsia-600 rounded-full shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
                     >
                       Explore Service

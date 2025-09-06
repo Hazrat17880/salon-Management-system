@@ -106,7 +106,7 @@ const HomePage = () => {
       <HowItWorks />
       {/* <TeamPreview /> */}
       {/* <Testimonials /> */}
-      <NewsletterCTA />
+      {/* <NewsletterCTA /> */}
     </div>
   );
 };

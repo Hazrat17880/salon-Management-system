@@ -15,6 +15,7 @@ import {
   FiLogOut,
   FiX,
   FiMessageSquare,
+  FiMessageCircle,
 } from "react-icons/fi";
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
@@ -39,8 +40,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { tab: "appointments", icon: FiCalendar, label: "Appointments", route: "/admin-dashboard/appointments" },
     { tab: "services", icon: FiSettings, label: "Services", route: "/admin-dashboard/services" },
     { tab: "feedbacks", icon: FiMessageSquare , label: "Feedbacks", route: "/admin-dashboard/feedbacks" },
-    { tab: "complaints", icon: FiAlertCircle, label: "Feedback & Complaints", route: "/admin-dashboard/complaints" },
-    { tab: "reports", icon: FiTrendingUp, label: "Reports & Analysis", route: "/admin-dashboard/reports" },
+    { tab: "complaints", icon: FiAlertCircle, label: "Complaints", route: "/admin-dashboard/complaints" },
+    // { tab: "reports", icon: FiTrendingUp, label: "Reports & Analysis", route: "/admin-dashboard/reports" },
+    { tab: "messages", icon: FiMessageCircle, label: "Messages", route: "/admin-dashboard/messages" },
+
   ];
 
   // Derive active tab by matching pathname
