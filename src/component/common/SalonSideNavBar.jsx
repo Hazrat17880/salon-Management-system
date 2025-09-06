@@ -35,7 +35,7 @@ const menuItems = [
  
   // Settings
   { id: "profile", icon: <User size={20} />, label: "Profile", href: "/salon-dashboard/profile" },
-  { id: "settings", icon: <Settings size={20} />, label: "Settings", href: "/salon-dashboard/settings" },
+  { id: "settings", icon: <Settings size={20} />, label: "Settings", href: "#" },
 ];
 
   function handleTabChange(id, href) {
