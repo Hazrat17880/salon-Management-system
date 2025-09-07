@@ -32,25 +32,11 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h3 className="text-white text-lg font-semibold mb-4">Product</h3>
-            <ul className="space-y-2">
-              <li><a href="/features" className="hover:text-white">Features</a></li>
-              <li><a href="/pricing" className="hover:text-white">Pricing</a></li>
-              <li><a href="/integrations" className="hover:text-white">Integrations</a></li>
-              <li><a href="/updates" className="hover:text-white">Updates</a></li>
-              <li><a href="/demo" className="hover:text-white">Demo</a></li>
-            </ul>
-          </div>
-
+          
           <div>
             <h3 className="text-white text-lg font-semibold mb-4">Resources</h3>
             <ul className="space-y-2">
-              <li><a href="/blog" className="hover:text-white">Blog</a></li>
               <li><a href="/guides" className="hover:text-white">Guides</a></li>
-              <li><a href="/help" className="hover:text-white">Help Center</a></li>
-              <li><a href="/webinars" className="hover:text-white">Webinars</a></li>
-              <li><a href="/community" className="hover:text-white">Community</a></li>
             </ul>
           </div>
 
@@ -58,10 +44,9 @@ export default function Footer() {
             <h3 className="text-white text-lg font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
               <li><a href="/about" className="hover:text-white">About Us</a></li>
-              <li><a href="/careers" className="hover:text-white">Careers</a></li>
+              <li><a href="/about" className="hover:text-white">Careers</a></li>
               <li><a href="/contact" className="hover:text-white">Contact</a></li>
-              <li><a href="/press" className="hover:text-white">Press</a></li>
-              <li><a href="/legal" className="hover:text-white">Legal</a></li>
+             
             </ul>
           </div>
         </div>
@@ -73,7 +58,6 @@ export default function Footer() {
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="/privacy" className="text-sm hover:text-white">Privacy Policy</a>
             <a href="/terms" className="text-sm hover:text-white">Terms of Service</a>
-            <a href="/cookies" className="text-sm hover:text-white">Cookie Policy</a>
           </div>
         </div>
       </div>

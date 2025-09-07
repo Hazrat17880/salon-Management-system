@@ -125,7 +125,7 @@ const Navbar = () => {
             </button>
             {activeDropdown === 'resources' && (
               <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-50 py-1">
-                <button onClick={() => handleRedirect("/blog")} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-pink-50">Blog</button>
+            
                 <button onClick={() => handleRedirect("/tutorials")} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-pink-50">Tutorials</button>
               </div>
             )}
