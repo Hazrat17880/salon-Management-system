@@ -410,6 +410,7 @@ export default function SalonSignupPage() {
                           <option value="United Kingdom">United Kingdom</option>
                           <option value="Australia">Australia</option>
                           <option value="Germany">Germany</option>
+                           <option value="Malaysia">Malaysia</option>
                         </select>
                         <FaGlobeAmericas className="absolute left-3 top-3.5 text-gray-400" />
                       </div>

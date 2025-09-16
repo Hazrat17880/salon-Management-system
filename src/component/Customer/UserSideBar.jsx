@@ -30,7 +30,7 @@ export default function UserSidebar({
     { label: "My Profile", icon: <FiUser size={20} />, href: "/user-dashboard/profile" },
     { label: "Appointments", icon: <FiCalendar size={20} />, href: "/user-dashboard/appointments" },
     { label: "Find Salons", icon: <FaCut size={20} />, href: "/user-dashboard/salons" },
-    { label: "Messages", icon: <FiMessageSquare size={20} />, href: "/user-dashboard/messages", badge: messages.filter(m => m.unread).length },
+    { label: "Messages", icon: <FiMessageSquare size={20} />, href: "/user-dashboard/messages" },
     { label: "Complaints", icon: <FiSettings size={20} />, href: "/user-dashboard/complaints" },
   ];
 
