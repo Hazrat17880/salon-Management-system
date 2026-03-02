@@ -13,6 +13,8 @@ export default function UserTopNav({
 }) {
   const router = useRouter();
 
+
+  console.log("your profile data recived here are :",profileData);
   const handleNotificationClick = () => {
     router.push("/user-dashboard/notifications");
   };
@@ -60,24 +62,29 @@ export default function UserTopNav({
             )} */}
           </div>
 
-          <div className="flex items-center">
-            {profileData.image ? (
-              <div className="relative h-8 w-8 rounded-full overflow-hidden">
-                <Image
-                  src={profileData.image}
-                  alt={profileData.name}
-                  fill
-                  className="object-cover"
-                  sizes="32px"
-                />
-              </div>
-            ) : (
-              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium">
-                {profileData.name.charAt(0)}
-              </div>
-            )}
-            <span className="ml-2 text-gray-700">{profileData.name}</span>
-          </div>
+        <div className="flex items-center">
+  {profileData?.image ? (
+    <div className="relative h-8 w-8 rounded-full overflow-hidden">
+      <Image
+        src={profileData.image}
+        alt={profileData.full_name || "User"}
+        fill
+        className="object-cover"
+        sizes="32px"
+      />
+    </div>
+  ) : (
+    <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium">
+      {profileData?.full_name
+        ? profileData.full_name.charAt(0).toUpperCase()
+        : "U"}
+    </div>
+  )}
+
+  <span className="ml-2 text-gray-700">
+    {profileData?.full_name || "Loading..."}
+  </span>
+</div>
         </div>
       </header>
     </>

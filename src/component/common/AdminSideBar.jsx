@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
+
 import {
   FiBarChart2,
   FiUser,
@@ -20,6 +22,7 @@ import {
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [isMobile, setIsMobile] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -43,7 +46,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { tab: "complaints", icon: FiAlertCircle, label: "Complaints", route: "/admin-dashboard/complaints" },
     // { tab: "reports", icon: FiTrendingUp, label: "Reports & Analysis", route: "/admin-dashboard/reports" },
     { tab: "messages", icon: FiMessageCircle, label: "Messages", route: "/admin-dashboard/messages" },
-
   ];
 
   // Derive active tab by matching pathname
@@ -55,6 +57,18 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
     if (isMobile) setSidebarOpen(false);
   };
 
+  const handleLogout = () => {
+    // Add your logout logic here
+    // For example, clear tokens, user data, etc.
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+            toast.success("Admin Logout Successfully")
+    
+    // Redirect to login page
+    router.push("/admin/login");
+
+  };
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -63,6 +77,43 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           className="fixed inset-0 z-20 bg-black bg-opacity-30"
           onClick={() => setSidebarOpen(false)}
         />
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4"
+          >
+            <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+              <FiLogOut className="text-red-600" size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-center text-gray-900 mb-2">
+              Confirm Logout
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              Are you sure you want to logout? You'll need to sign in again to access your account.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                Logout
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
 
       <motion.div
@@ -106,7 +157,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
             );
           })}
           <button
-            onClick={() => alert("Trigger logout modal in Topbar")}
+            onClick={() => setShowLogoutModal(true)}
             className="flex items-center w-full p-2 text-gray-500 hover:bg-red-100 hover:text-red-600 rounded-xl transition focus:outline-none"
           >
             <FiLogOut className="mr-3" /> Logout

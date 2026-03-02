@@ -9,7 +9,7 @@ const pool = mysql.createPool({
   database: process.env.DATABASE_NAME,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
 });
 
 // Utility function to execute queries
@@ -29,27 +29,39 @@ export async function query(sql, params) {
     // ______________________________________AUTHENTICATION TABLES________________________________
     // use auth table
     await query(`
+
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   image VARCHAR(255),
-  password_hash VARCHAR(255) NOT NULL,
+
+  password_hash VARCHAR(255) NULL,
+
+  
+  provider ENUM('credentials', 'google', 'facebook') 
+    DEFAULT 'credentials',
+  provider_id VARCHAR(255) NULL,
+
   phone_number VARCHAR(20),
   date_of_birth DATE,
   gender ENUM('male', 'female', 'other'),
   address VARCHAR(255),
+
+
   otp_code VARCHAR(10),
   otp_expires_at DATETIME,
+
   is_verified BOOLEAN DEFAULT FALSE,
-  active BOOLEAN DEFAULT FALSE,
+  active BOOLEAN DEFAULT TRUE,
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+    ON UPDATE CURRENT_TIMESTAMP
 );
 
-
     `);
-  
+
     // slon table
     await query(`
     CREATE TABLE IF NOT EXISTS salons (
@@ -78,9 +90,9 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-`)
+`);
 
-//  admin auth
+    //  admin auth
 
     await query(`
 CREATE TABLE IF NOT EXISTS admin_auth (
@@ -97,9 +109,9 @@ CREATE TABLE IF NOT EXISTS admin_auth (
 
 
     `);
-//  _______________________________SALON TABLES _____________________________________
-// table for salon services
-await query(`
+    //  _______________________________SALON TABLES _____________________________________
+    // table for salon services
+    await query(`
   CREATE TABLE IF NOT EXISTS salon_services (
     id INT AUTO_INCREMENT PRIMARY KEY,
     salon_id INT NOT NULL, -- FK to salon table
@@ -119,10 +131,10 @@ await query(`
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
 
-);`)
+);`);
 
-// review
-await query(`
+    // review
+    await query(`
   CREATE TABLE IF NOT EXISTS review (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -138,20 +150,25 @@ await query(`
   )
 `);
 
-await query(`
+    await query(`
   CREATE TABLE IF NOT EXISTS staff (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    image VARCHAR(255),
-    salon_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,                -- Staff name
+    position VARCHAR(100),                      -- Job title/role (e.g., Hair Stylist)
+    email VARCHAR(255) UNIQUE,                  -- Optional contact email
+    phone VARCHAR(20),                           -- Optional phone number
+    bio TEXT,                                   -- Short description / biography
+    image VARCHAR(255),                         -- Profile image
+    salon_id INT NOT NULL,                      -- Salon reference
+    status ENUM('active','inactive') DEFAULT 'active',  -- Staff status
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
   )
 `);
 
-// for favorite salon
-await query(`
+    // for favorite salon
+    await query(`
 CREATE TABLE IF NOT EXISTS favorite_salon (
     id INT AUTO_INCREMENT PRIMARY KEY,
     salon_id INT NOT NULL,
@@ -161,9 +178,9 @@ CREATE TABLE IF NOT EXISTS favorite_salon (
 
 );
 
-  `)
-  // APPOINTEMENT 
- await query(`
+  `);
+    // APPOINTEMENT
+    await query(`
 CREATE TABLE IF NOT EXISTS appointment (
     id INT AUTO_INCREMENT PRIMARY KEY,
     salon_id INT NOT NULL,
@@ -182,9 +199,8 @@ CREATE TABLE IF NOT EXISTS appointment (
 );
 `);
 
-
-// converstion
-await query(`
+    // converstion
+    await query(`
   CREATE TABLE IF NOT EXISTS conversations (
   id INT AUTO_INCREMENT PRIMARY KEY,
   salon_id INT NOT NULL,
@@ -193,9 +209,9 @@ await query(`
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);`)
+);`);
 
-await query(`
+    await query(`
   CREATE TABLE IF NOT EXISTS messages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   conversation_id INT NOT NULL,
@@ -204,9 +220,9 @@ await query(`
   is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
-);`)
+);`);
 
-await query(`
+    await query(`
 CREATE TABLE IF NOT EXISTS complaints (
   id INT AUTO_INCREMENT PRIMARY KEY,
   complaint_about ENUM('salon', 'services') NOT NULL,
@@ -222,10 +238,10 @@ CREATE TABLE IF NOT EXISTS complaints (
   INDEX (user_id),
   INDEX (is_read)
 );
-`)
+`);
 
-// ________________________________ FOR SLIDER _____________________________________
-await query(`
+    // ________________________________ FOR SLIDER _____________________________________
+    await query(`
   CREATE TABLE IF NOT EXISTS sliders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255),
@@ -236,8 +252,8 @@ await query(`
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   )
 `);
-// Add this to your existing initDB function
-await query(`
+    // Add this to your existing initDB function
+    await query(`
   CREATE TABLE IF NOT EXISTS contact_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -251,9 +267,9 @@ await query(`
     INDEX (created_at)
   );
 `);
-    console.log('Database initialized');
+    console.log("Database initialized");
   } catch (error) {
-    console.error('Database initialization failed:', error);
+    console.error("Database initialization failed:", error);
     throw error;
   }
-})()
+})();

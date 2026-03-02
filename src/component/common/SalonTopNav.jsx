@@ -2,10 +2,13 @@
 import { useState } from "react";
 import { FiMenu, FiBell, FiUser } from "react-icons/fi";
 
-export default function SalonsTopBar() {
+export default function SalonsTopBar({profileData}) {
   // Note: This component doesn't control sidebar state, 
   // since no props passed. 
   // You can add a local toggle or just static bar.
+
+
+  console.log("your top profile data ",profileData);
 
   return (
     <header className="w-full bg-white shadow-md border-b border-gray-200 h-16 flex items-center justify-between px-6 lg:px-12">
@@ -37,7 +40,7 @@ export default function SalonsTopBar() {
           onClick={() => alert("User menu")}
         >
           <FiUser size={20} />
-          <span className="hidden sm:block font-medium text-gray-700">John Doe</span>
+          <span className="hidden sm:block font-medium text-gray-700">{profileData.owner_name}</span>
         </button>
       </div>
     </header>

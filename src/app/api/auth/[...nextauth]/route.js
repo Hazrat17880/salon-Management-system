@@ -58,23 +58,30 @@ const handler = NextAuth({
       return true;
     },
 
-    async jwt({ token, user }) {
-      if (user) {
-        token.name = user.name;
-        token.email = user.email;
-        token.picture = user.image;
-      }
-      return token;
-    },
+   async jwt({ token, user }) {
+  if (user) {
+    const dbUser = await query(
+      "SELECT id FROM users WHERE email = ?",
+      [user.email]
+    );
 
-    async session({ session, token }) {
-      if (token) {
-        session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.picture;
-      }
-      return session;
-    },
+    token.id = dbUser[0].id;   // ✅ Add this
+    token.name = user.name;
+    token.email = user.email;
+    token.picture = user.image;
+  }
+  return token;
+},
+
+   async session({ session, token }) {
+  if (token) {
+    session.user.id = token.id;   // ✅ Add this
+    session.user.name = token.name;
+    session.user.email = token.email;
+    session.user.image = token.picture;
+  }
+  return session;
+},
 
     async redirect() {
       return "/user-dashboard"; 

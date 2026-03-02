@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 export default function SalonForgotPassword() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function SalonForgotPassword() {
         "forgotData",
         JSON.stringify({ email, purpose: "forgot", role: "salon" })
       );
+      toast.success("an OTP has been send to your emial address please verify withing 15 minuts")
 
       router.push("/salon/otp-verification");
     } catch (err) {
@@ -69,7 +71,7 @@ export default function SalonForgotPassword() {
         transition={{ duration: 0.5 }}
         className="z-10 bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl px-8 py-10 w-full max-w-md"
       >
-        <div className="text-center mb-8">
+        {/* <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800 mb-1">
             {emailSent ? "Check Your Email" : "Reset Salon Password"}
           </h2>
@@ -78,7 +80,7 @@ export default function SalonForgotPassword() {
               ? `We've sent a password reset link to your salon account email`
               : `Enter your salon account email to reset password`}
           </p>
-        </div>
+        </div> */}
 
         {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
 

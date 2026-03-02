@@ -526,28 +526,28 @@ const Services = () => {
                   <div className="flex items-center gap-4">
                     <button 
                       onClick={() => handleViewService(service)}
-                      className="text-indigo-600 hover:text-indigo-800 p-2 rounded-full hover:bg-indigo-50"
+                      className="text-indigo-600 cursor-pointer hover:text-indigo-800 p-2 rounded-full hover:bg-indigo-50"
                       title="View"
                     >
                       <FiEye size={16} />
                     </button>
                     <button 
                       onClick={() => handleEditService(service)}
-                      className="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50"
+                      className="text-blue-600 hover:text-blue-800 cursor-pointer p-2 rounded-full hover:bg-blue-50"
                       title="Edit"
                     >
                       <FiEdit2 size={16} />
                     </button>
                     <button 
                       onClick={() => toggleServiceStatus(service.id)}
-                      className={`p-2 rounded-full ${service.status === 'active' ? 'text-green-600 hover:text-green-800 hover:bg-green-50' : 'text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50'}`}
+                      className={`p-2 rounded-full ${service.status === 'active' ? 'text-green-600 cursor-pointer hover:text-green-800 hover:bg-green-50' : 'text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50'}`}
                       title={service.status === 'active' ? "Deactivate" : "Activate"}
                     >
                       {service.status === 'active' ? <FiToggleRight size={18} /> : <FiToggleLeft size={18} />}
                     </button>
                     <button 
                       onClick={() => showDeleteConfirm(service)}
-                      className="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50"
+                      className="text-red-600 hover:text-red-800 p-2 cursor-pointer rounded-full hover:bg-red-50"
                       title="Delete"
                     >
                       <FiTrash2 size={16} />

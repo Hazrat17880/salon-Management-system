@@ -68,7 +68,9 @@ const handleLogin = async (e) => {
 };
 
 // Forgot password handler
-const handleForgotPassword = () => {
+const handleForgotPassword = (e) => {
+  e.preventDefault()
+
   if (userRole === "user") {
     router.push("/user/forgot");
   } else {
@@ -222,12 +224,7 @@ const handleForgotPassword = () => {
                   Remember me
                 </label>
               </div>
-              <button 
-                onClick={handleForgotPassword}
-                className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
-              >
-                Forgot password?
-              </button>
+             
             </div>
           </div>
 
@@ -250,6 +247,15 @@ const handleForgotPassword = () => {
             )}
           </motion.button>
         </form>
+        <div className="flex justify-center my-4">
+           <button type="button" 
+                onClick={handleForgotPassword}
+                className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
+              >
+                Forgot password?
+              </button>
+
+        </div>
 
       
         <div className="mt-8 text-center text-sm text-gray-500">

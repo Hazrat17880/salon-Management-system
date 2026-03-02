@@ -41,6 +41,8 @@ export default function SalonDetails() {
         return;
       }
       const data = await res.json();
+      console.log("your salone services are here :",data);
+
       if (data.success) {
         setSalon(data.data.salon);
         setServices(data.data.services);
@@ -166,9 +168,9 @@ export default function SalonDetails() {
                 <span className="flex items-center gap-1">
                   <MapPin size={18} /> {salon.city}, {salon.country}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Phone size={18} /> {salon.phone}
-                </span>
+               <span className="flex items-center gap-1">
+  <Clock size={18} /> {salon.opening_hours}
+</span>
                
               </div>
             </div>

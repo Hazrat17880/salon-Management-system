@@ -133,7 +133,7 @@ export default function ForgotPassword() {
           </h2>
           <p className="text-gray-500">
             {emailSent
-              ? `We've sent a password reset link to your ${userType} account email`
+              ? `We've sent a password reset password otp to your ${userType} account email`
               : `Enter your ${userType} account email to reset password`}
           </p>
         </div>

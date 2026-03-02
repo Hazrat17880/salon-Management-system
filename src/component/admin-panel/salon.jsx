@@ -41,12 +41,14 @@ const SalonManagement = () => {
       const response = await fetch(`/api/admin/salons`, {
         credentials: 'include'
       });
+      console.log("your salon data are here :",response);
 
       if (!response.ok) {
         throw new Error('Failed to fetch salons');
       }
 
       const data = await response.json();
+      console.log("your salons data are :",data);
       
       if (data.success) {
         setSalons(data.data);
@@ -467,60 +469,103 @@ const SalonManagement = () => {
                   </div>
                   
                   {/* Documents Section */}
-                  <div className="md:col-span-2">
-                    <h4 className="font-medium text-gray-900 mb-2">Documents & Images</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* ID Card */}
-                      {selectedSalon.id_card && (
-                        <div className="border rounded-lg p-3 flex flex-col items-center">
-                          <FileText className="text-blue-500 mb-2" size={32} />
-                          <p className="text-sm font-medium mb-2">ID Card</p>
-                          <button
-                            onClick={() => previewDocument(selectedSalon.id_card, 'document')}
-                            className="text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            View Document
-                          </button>
-                        </div>
-                      )}
-                      
-                      {/* License */}
-                      {selectedSalon.license && (
-                        <div className="border rounded-lg p-3 flex flex-col items-center">
-                          <FileText className="text-green-500 mb-2" size={32} />
-                          <p className="text-sm font-medium mb-2">Business License</p>
-                          <button
-                            onClick={() => previewDocument(selectedSalon.license, 'document')}
-                            className="text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            View Document
-                          </button>
-                        </div>
-                      )}
-                      
-                      {/* Salon Image */}
-                      {selectedSalon.image && (
-                        <div className="border rounded-lg p-3 flex flex-col items-center">
-                          <ImageIcon className="text-purple-500 mb-2" size={32} />
-                          <p className="text-sm font-medium mb-2">Salon Image</p>
-                          <button
-                            onClick={() => previewDocument(selectedSalon.image, 'image')}
-                            className="text-sm text-blue-600 hover:text-blue-800"
-                          >
-                            View Image
-                          </button>
-                        </div>
-                      )}
-                      
-                      {/* Show message if no documents */}
-                      {!selectedSalon.id_card && !selectedSalon.license && !selectedSalon.image && (
-                        <div className="md:col-span-3 text-center py-4 text-gray-500">
-                          No documents or images uploaded.
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  {/* Documents Section */}
+<div className="md:col-span-2">
+  <h4 className="font-medium text-gray-900 mb-2">Documents & Images</h4>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    
+    {/* ID Card */}
+    {selectedSalon.id_card && (
+      <div className="border rounded-lg p-3 flex flex-col items-center">
+        <FileText className="text-blue-500 mb-2" size={32} />
+        <p className="text-sm font-medium mb-2">ID Card</p>
+        <img
+          src={selectedSalon.id_card}
+          alt="ID Card"
+          className="w-full h-32 object-cover rounded mb-2 border cursor-pointer"
+          onClick={() => previewDocument(selectedSalon.id_card, 'image')}
+        />
+        <button
+          onClick={() => previewDocument(selectedSalon.id_card, 'image')}
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          View Full Image
+        </button>
+      </div>
+    )}
 
+    {/* License */}
+    {selectedSalon.license && (
+      <div className="border rounded-lg p-3 flex flex-col items-center">
+        <FileText className="text-green-500 mb-2" size={32} />
+        <p className="text-sm font-medium mb-2">Business License</p>
+        <img
+          src={selectedSalon.license}
+          alt="License"
+          className="w-full h-32 object-cover rounded mb-2 border cursor-pointer"
+          onClick={() => previewDocument(selectedSalon.license, 'image')}
+        />
+        <button
+          onClick={() => previewDocument(selectedSalon.license, 'image')}
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          View Full Image
+        </button>
+      </div>
+    )}
+
+    {/* Salon Image */}
+    {selectedSalon.image && (
+      <div className="border rounded-lg p-3 flex flex-col items-center">
+        <ImageIcon className="text-purple-500 mb-2" size={32} />
+        <p className="text-sm font-medium mb-2">Salon Image</p>
+        <img
+          src={selectedSalon.image}
+          alt="Salon"
+          className="w-full h-32 object-cover rounded mb-2 border cursor-pointer"
+          onClick={() => previewDocument(selectedSalon.image, 'image')}
+        />
+        <button
+          onClick={() => previewDocument(selectedSalon.image, 'image')}
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          View Full Image
+        </button>
+      </div>
+    )}
+
+    {/* Show message if no documents */}
+    {!selectedSalon.id_card && !selectedSalon.license && !selectedSalon.image && (
+      <div className="md:col-span-3 text-center py-4 text-gray-500">
+        No documents or images uploaded.
+      </div>
+    )}
+  </div>
+
+  {/* Inline Image Preview Modal inside View Modal */}
+  {imagePreview.url && (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-auto p-4"
+      >
+        <button 
+          onClick={closePreview}
+          className="absolute top-2 right-2 text-white bg-gray-800 rounded-full p-1 hover:bg-gray-700 z-10"
+        >
+          <X size={24} />
+        </button>
+        <img
+          src={imagePreview.url}
+          alt="Preview"
+          className="w-full h-auto max-h-[75vh] object-contain rounded"
+        />
+      </motion.div>
+    </div>
+  )}
+</div>
                   {/* View Full Details Button */}
                   <div className="md:col-span-2 mt-4">
                     <button

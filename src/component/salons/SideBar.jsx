@@ -41,39 +41,44 @@ export default function UserSidebar({
 
   return (
     <>
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-          >
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              Confirm Logout
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to logout from your account?
-            </p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={cancelLogout}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={confirmLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                Logout
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+  {showLogoutConfirm && (
+  <div
+    className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+    onClick={cancelLogout} // click outside modal cancels logout
+  >
+    <motion.div
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.8, opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="bg-white rounded-lg p-6 max-w-md w-full mx-4"
+      onClick={(e) => e.stopPropagation()} // prevent click inside modal from closing it
+    >
+      <h3 className="text-xl font-semibold text-gray-800 mb-4">
+        Confirm Logout
+      </h3>
+      <p className="text-gray-600 mb-6">
+        Are you sure you want to logout from your account?
+      </p>
+      <div className="flex justify-end space-x-3">
+        <button
+          onClick={cancelLogout}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+        >
+          Cancel
+        </button>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={confirmLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+        >
+          Logout
+        </motion.button>
+      </div>
+    </motion.div>
+  </div>
+)}
 
       <motion.div
         initial={{ x: mobileMenuOpen ? 0 : "-100%" }}
@@ -117,7 +122,7 @@ export default function UserSidebar({
                 <div className="text-indigo-200 mr-3">{item.icon}</div>
                 <span className="font-medium">{item.label}</span>
                 {item.badge > 0 && (
-                  <span className="ml-auto bg-indigo-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="ml-auto bg-indigo-500 cursor-pointer text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {item.badge}
                   </span>
                 )}
@@ -126,10 +131,10 @@ export default function UserSidebar({
           })}
         </nav>
 
-        <div className="p-4">
+        <div className="p-4 mb">
           <button
             onClick={handleLogout}
-            className="flex items-center w-full p-3 text-indigo-200 hover:text-white hover:bg-indigo-700 rounded-lg transition"
+            className="flex items-center cursor-pointer w-full p-3 text-indigo-200 hover:text-white hover:bg-indigo-700 rounded-lg transition"
           >
             <FiLogOut size={20} className="mr-3" />
             Logout

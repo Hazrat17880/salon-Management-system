@@ -202,12 +202,7 @@ const handleGoogleLogin = () => {
                   Remember me
                 </label>
               </div>
-              <button 
-                onClick={handleForgotPassword}
-                className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
-              >
-                Forgot password?
-              </button>
+              
             </div>
           </div>
 
@@ -231,6 +226,17 @@ const handleGoogleLogin = () => {
           </motion.button>
         </form>
 
+        <div className="flex my-2 justify-center">
+
+
+          <button 
+                onClick={handleForgotPassword}
+                className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
+              >
+                Forgot password?
+              </button>
+        </div>
+
         <div className="my-6 relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -240,7 +246,7 @@ const handleGoogleLogin = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 cursor-pointer">
           <motion.button
             type="button"
             whileHover={{ y: -2 }}
@@ -261,7 +267,7 @@ const handleGoogleLogin = () => {
       <FaFacebook className="text-xl text-blue-600" />
       <span className="text-sm font-medium">Facebook</span>
     </motion.button>
-        </div>
+        </div> 
 
         <div className="mt-8 text-center text-sm text-gray-500">
           Don't have an account?{' '}

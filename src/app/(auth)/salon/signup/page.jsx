@@ -729,7 +729,7 @@ export default function SalonSignupPage() {
                               accept="image/*,.pdf"
                               onChange={handleFileChange}
                               className="hidden"
-                              required
+                            
                             />
                           </label>
                         </div>
@@ -764,7 +764,7 @@ export default function SalonSignupPage() {
                               accept="image/*,.pdf"
                               onChange={handleFileChange}
                               className="hidden"
-                              required
+                            
                             />
                           </label>
                         </div>
@@ -779,7 +779,7 @@ export default function SalonSignupPage() {
                         type="checkbox"
                         checked={acceptTerms}
                         onChange={() => setAcceptTerms(!acceptTerms)}
-                        required
+                        
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                     </div>

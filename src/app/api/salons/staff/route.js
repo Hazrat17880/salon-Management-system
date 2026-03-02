@@ -28,10 +28,7 @@ export const GET = withSalonAuth(async (request) => {
     const salonId = request.salon.id;
 
     if (!salonId) {
-      return NextResponse.json(
-        { success: false, message: 'Salon ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: 'Salon ID is required' }, { status: 400 });
     }
 
     const staff = await query(
@@ -39,17 +36,11 @@ export const GET = withSalonAuth(async (request) => {
       [salonId]
     );
 
-    return NextResponse.json({
-      success: true,
-      data: staff,
-      total: staff.length,
-    });
+    return NextResponse.json({ success: true, data: staff, total: staff.length });
+
   } catch (error) {
     console.error('Error fetching staff:', error);
-    return NextResponse.json(
-      { success: false, message: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 });
 
@@ -59,12 +50,17 @@ export const POST = withSalonAuth(async (request) => {
     const salon_id = request.salon.id;
 
     const formData = await request.formData();
-    const title = formData.get('title');
-    const imageFile = formData.get('image'); // file input
+    const name = formData.get('name');
+    const position = formData.get('position');
+    const email = formData.get('email');
+    const phone = formData.get('phone');
+    const bio = formData.get('bio');
+    const status = formData.get('status') || 'active';
+    const imageFile = formData.get('image');
 
-    if (!title || !salon_id) {
+    if (!name || !salon_id) {
       return NextResponse.json(
-        { success: false, message: 'Title and salon ID are required' },
+        { success: false, message: 'Name and salon ID are required' },
         { status: 400 }
       );
     }
@@ -75,29 +71,21 @@ export const POST = withSalonAuth(async (request) => {
     }
 
     const result = await query(
-      'INSERT INTO staff (title, image, salon_id) VALUES (?, ?, ?)',
-      [title, imagePath, salon_id]
+      'INSERT INTO staff (name, position, email, phone, bio, image, salon_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, position, email, phone, bio, imagePath, salon_id, status]
     );
 
-    const newStaff = await query(
-      'SELECT * FROM staff WHERE id = ?',
-      [result.insertId]
-    );
+    const newStaff = await query('SELECT * FROM staff WHERE id = ?', [result.insertId]);
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Staff member created successfully',
-        data: newStaff[0],
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: 'Staff member created successfully',
+      data: newStaff[0],
+    }, { status: 201 });
+
   } catch (error) {
     console.error('Error creating staff:', error);
-    return NextResponse.json(
-      { success: false, message: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 });
 
@@ -106,73 +94,59 @@ export const PATCH = withSalonAuth(async (request) => {
   try {
     const formData = await request.formData();
     const id = formData.get('id');
-    const title = formData.get('title');
-    const imageFile = formData.get('image');
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, message: 'Staff ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: 'Staff ID is required' }, { status: 400 });
     }
 
     const existingStaff = await query('SELECT * FROM staff WHERE id = ?', [id]);
     if (existingStaff.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'Staff member not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: 'Staff member not found' }, { status: 404 });
     }
+
+    const name = formData.get('name');
+    const position = formData.get('position');
+    const email = formData.get('email');
+    const phone = formData.get('phone');
+    const bio = formData.get('bio');
+    const status = formData.get('status');
+    const imageFile = formData.get('image');
 
     const updateFields = [];
     const updateValues = [];
 
-    if (title) {
-      updateFields.push('title = ?');
-      updateValues.push(title);
-    }
+    if (name) { updateFields.push('name = ?'); updateValues.push(name); }
+    if (position) { updateFields.push('position = ?'); updateValues.push(position); }
+    if (email) { updateFields.push('email = ?'); updateValues.push(email); }
+    if (phone) { updateFields.push('phone = ?'); updateValues.push(phone); }
+    if (bio) { updateFields.push('bio = ?'); updateValues.push(bio); }
+    if (status) { updateFields.push('status = ?'); updateValues.push(status); }
 
     if (imageFile && imageFile.name) {
       const imagePath = await saveFile(imageFile);
       updateFields.push('image = ?');
       updateValues.push(imagePath);
 
-      // Optionally delete old file
+      // Delete old image
       if (existingStaff[0].image) {
         const oldPath = path.join(process.cwd(), 'public', existingStaff[0].image);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
     }
 
     if (updateFields.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'No fields to update' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: 'No fields to update' }, { status: 400 });
     }
 
     updateValues.push(id);
-
-    await query(
-      `UPDATE staff SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      updateValues
-    );
+    await query(`UPDATE staff SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, updateValues);
 
     const updatedStaff = await query('SELECT * FROM staff WHERE id = ?', [id]);
+    return NextResponse.json({ success: true, message: 'Staff updated', data: updatedStaff[0] });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Staff member updated successfully',
-      data: updatedStaff[0],
-    });
   } catch (error) {
     console.error('Error updating staff:', error);
-    return NextResponse.json(
-      { success: false, message: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: 'Internal server error' }, { status: 500 });
   }
 });
 

@@ -106,19 +106,19 @@ const Navbar = () => {
   return (
     <header className="fixed w-full z-50 bg-white/90 backdrop-blur-sm py-4 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <button onClick={() => handleRedirect("/")} className="flex items-center">
+        <button onClick={() => handleRedirect("/")} className="flex items-center cursor-pointer">
           <img src="/logo.png" alt="SalonPro Logo" className="h-12 w-auto" />
         </button>
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-8">
-          <button onClick={() => handleRedirect("/")} className="text-sm font-medium text-gray-700 hover:text-pink-600">Home</button>
-          <button onClick={() => handleRedirect("/about")} className="text-sm font-medium text-gray-700 hover:text-pink-600">About</button>
+          <button onClick={() => handleRedirect("/")} className="text-sm font-medium text-gray-700 hover:text-pink-600 cursor-pointer">Home</button>
+          <button onClick={() => handleRedirect("/about")} className="text-sm font-medium text-gray-700 hover:text-pink-600 cursor-pointer">About</button>
 
           <div className="relative" ref={resourcesRef}>
             <button 
               onClick={() => toggleDropdown("resources")} 
-              className="flex items-center text-sm font-medium text-gray-700 hover:text-pink-600"
+              className="flex items-center text-sm font-medium text-gray-700 cursor-pointer hover:text-pink-600"
             >
               Resources
               <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${activeDropdown === 'resources' ? 'rotate-180' : ''}`} />
@@ -126,30 +126,30 @@ const Navbar = () => {
             {activeDropdown === 'resources' && (
               <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-50 py-1">
             
-                <button onClick={() => handleRedirect("/tutorials")} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-pink-50">Tutorials</button>
+                <button onClick={() => handleRedirect("/tutorials")} className="block w-full cursor-pointer text-left px-4 py-2 text-sm text-gray-700 hover:bg-pink-50">Tutorials</button>
               </div>
             )}
           </div>
 
-          <button onClick={() => handleRedirect("/contact")} className="text-sm font-medium text-gray-700 hover:text-pink-600">Contact</button>
+          <button onClick={() => handleRedirect("/contact")} className="text-sm font-medium cursor-pointer text-gray-700 hover:text-pink-600">Contact</button>
         </nav>
 
         <div className="hidden lg:flex items-center space-x-4">
           {logined ? (
             <>
-              <button onClick={() => handleRedirect("/user/dashboard")} className="flex items-center text-sm font-medium text-gray-700 hover:text-pink-600">
+              <button onClick={() => handleRedirect("/user/dashboard")} className="flex cursor-pointer items-center text-sm font-medium text-gray-700 hover:text-pink-600">
                 <User className="h-4 w-4 mr-2" /> Dashboard
               </button>
-              <button onClick={handleLogout} className="flex items-center text-sm font-medium text-gray-700 hover:text-pink-600">
+              <button onClick={handleLogout} className="flex items-center text-sm font-medium cursor-pointer text-gray-700 hover:text-pink-600">
                 <LogOut className="h-4 w-4 mr-2" /> Logout
               </button>
             </>
           ) : (
-            <button onClick={() => handleRedirect("/user/signin")} className="flex items-center text-sm font-medium text-gray-700 hover:text-pink-600">
+            <button onClick={() => handleRedirect("/user/signin")} className="flex items-center cursor-pointer text-sm font-medium text-gray-700 hover:text-pink-600">
               <User className="h-4 w-4 mr-2" /> Sign In
             </button>
           )}
-          <button onClick={() => handleRedirect("/booking")} className="flex items-center bg-pink-600 hover:bg-pink-700 text-white px-5 py-2.5 rounded-full text-sm font-medium">
+          <button onClick={() => handleRedirect("/booking")} className="flex items-center cursor-pointer bg-pink-600 hover:bg-pink-700 text-white px-5 py-2.5 rounded-full text-sm font-medium">
             <Calendar className="h-4 w-4 mr-2" /> Book Now
           </button>
         </div>
@@ -167,7 +167,7 @@ const Navbar = () => {
       {mobileOpen && (
         <div className="lg:hidden bg-white border-t border-gray-200" ref={mobileMenuRef}>
           <div className="px-4 py-3 space-y-3">
-            <button onClick={() => handleRedirect("/")} className="block w-full text-left text-sm text-gray-700 hover:text-pink-600 py-2">Home</button>
+            <button onClick={() => handleRedirect("/")} className="block w-full text-left text-sm  text-gray-700 hover:text-pink-600 py-2">Home</button>
             <button onClick={() => handleRedirect("/about")} className="block w-full text-left text-sm text-gray-700 hover:text-pink-600 py-2">About</button>
 
             <div>

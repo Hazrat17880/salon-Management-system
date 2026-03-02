@@ -10,9 +10,8 @@ export async function POST(request) {
     const otp = body.otp;
     // const email = body.email;
 
-    const cookieStore = cookies();
-    const email = await cookieStore.get('salon_email')?.value;
-
+    const cookieStore = await cookies();
+const email = cookieStore.get('salon_email')?.value;
     console.log("OTP from request:", otp);
     console.log("Email from cookie:", email);
 
@@ -72,8 +71,7 @@ export async function POST(request) {
     );
 
     // Set auth cookie
-    await cookies().set('salonstoken', token, {
-      httpOnly: true,
+cookieStore.set('salonstoken', token, {      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7, // 7 days
