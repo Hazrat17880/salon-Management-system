@@ -6,7 +6,7 @@ import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getAuthToken, setAuthToken } from "@/lib/cookiesAction";
+import { getAuthToken, setAuthToken , clearAllAuthData} from "@/lib/cookiesAction";
 import { toast } from "react-toastify";
 import { signIn, useSession } from "next-auth/react";
 
@@ -28,32 +28,44 @@ export default function UserLoginPage() {
   };
 
   // Function to set custom token after OAuth login
-  const setCustomToken = async (email) => {
-    try {
-      const response = await fetch('/api/auth/set-custom-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+  // Add this to your login page component (not in cookiesAction.js)
+const setCustomToken = async (email) => {
+  try {
+    // Clear ALL existing auth data first
+    clearAllAuthData();
+    
+    const response = await fetch('/api/auth/set-custom-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
+    
+    if (data.success) {
+      setAuthToken('user', 'token');
       
-      if (data.success) {
-        setAuthToken('user', 'token');
-        return true;
+      // Store current user email in sessionStorage to detect changes
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('currentUserEmail', email);
+        sessionStorage.setItem('lastLoginMethod', 'oauth');
       }
-      return false;
-    } catch (error) {
-      console.error('Error setting custom token:', error);
-      return false;
+      
+      return true;
     }
-  };
+    return false;
+  } catch (error) {
+    console.error('Error setting custom token:', error);
+    return false;
+  }
+};
 
   // Google login handler - FIXED
   const handleGoogleLogin = async () => {
     try {
+       clearAllAuthData();
       setIsLoading(true);
       await signIn("google", { 
         callbackUrl: "/user-dashboard",
@@ -69,6 +81,7 @@ export default function UserLoginPage() {
   // Facebook login handler - FIXED
   const handleFacebookLogin = async () => {
     try {
+       clearAllAuthData();
       setIsLoading(true);
       await signIn("facebook", { 
         callbackUrl: "/user-dashboard",
@@ -88,6 +101,7 @@ export default function UserLoginPage() {
     setError(null);
 
     try {
+       clearAllAuthData();
       const response = await fetch("/api/auth/user/login", {
         method: "POST",
         headers: {
@@ -134,17 +148,41 @@ export default function UserLoginPage() {
     handleOAuthCallback();
   }, [session, status, router]);
 
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
-      let token = getAuthToken('user');
-      if (token) {
-        router.replace("/user-dashboard");
-      }
-    };
+  // Check authentication status - THIS IS THE PROBLEM
 
-    checkAuth();
-  }, [router]);
+
+
+
+
+useEffect(() => {
+  if (status === "authenticated") {
+    router.replace("/user-dashboard");
+    return;
+  }
+
+  const token = getAuthToken("user");
+
+  if (token && status !== "loading") {
+    router.replace("/user-dashboard");
+  }
+}, [status, router]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Show loading while checking session or during OAuth callback
   if (status === "loading" || isOAuthCallback) {

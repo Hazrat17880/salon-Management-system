@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { signOut } from "next-auth/react"; // Add this import
 import { toast } from "react-toastify"; // Add this import
-import { removeAuthToken } from "@/lib/cookiesAction"; // Add this import
+import { removeAuthToken , clearAllAuthData} from "@/lib/cookiesAction"; // Add this import
 
 // ─── Portal Logout Modal ──────────────────────────────────────────────────────
 function LogoutModal({ onCancel, onConfirm }) {
@@ -90,53 +90,125 @@ export default function UserSidebar({ unreadNotifications, messages, setMobileMe
   const pathname = usePathname();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-const confirmLogout = async () => {
-  if (isLoggingOut) return;
-  
-  try {
-    setIsLoggingOut(true);
-    
-    // Clear everything from localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.clear();
-      
-      // Clear cookies
-      document.cookie.split(";").forEach(function(c) {
-        document.cookie = c.replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
-      });
-    }
 
-    // Call NextAuth signOut
+
+
+const confirmLogout = async () => {
+  console.log("your logout is calling at the frontend");
+  try {
+    // 1️⃣ Call backend first (clears HttpOnly cookies like usertoken)
+    await fetch("/api/auth/user/logout", {
+      method: "POST",
+      credentials: "include", // VERY important for cookies
+    });
+
+    // 2️⃣ Clear NextAuth session (OAuth / session-token)
     await signOut({ redirect: false });
-    
-    // Call logout API - but don't wait for it
-    fetch('/api/auth/logout', {
-      method: 'POST',
-    }).catch(err => console.log('Background logout error:', err));
-    
-    // Show success message
-    toast.success('Logged out successfully');
-    
-    // Small delay to ensure toast is shown
-    setTimeout(() => {
-      router.push('/user/signin');
-      router.refresh();
-    }, 100);
-    
+
+    // 3️⃣ Clear all frontend tokens (localStorage + JS cookies)
+    clearAllAuthData();
+
   } catch (error) {
-    console.error('Logout error:', error);
-    toast.error('Failed to logout');
-    
-    setTimeout(() => {
-      router.push('/user/signin');
-    }, 100);
-    
+    console.error("Logout failed:", error);
   } finally {
-    setIsLoggingOut(false);
-    setShowLogoutConfirm(false);
+    // 4️⃣ Always redirect
+    router.replace("/user/signin");
   }
 };
+
+
+
+
+
+
+//   const confirmLogout = async () => {
+//   if (isLoggingOut) return;
+  
+//   try {
+//     setIsLoggingOut(true);
+    
+//     // Set flag that we're logging out
+//     if (typeof window !== 'undefined') {
+//       sessionStorage.setItem('justLoggedOut', 'true');
+//     }
+    
+//     // Clear ALL client-side data FIRST
+//     if (typeof window !== 'undefined') {
+//       // Clear localStorage
+//       localStorage.clear();
+      
+//       // Clear sessionStorage (but keep our flag for a moment)
+//       const logoutFlag = sessionStorage.getItem('justLoggedOut');
+//       sessionStorage.clear();
+//       if (logoutFlag) {
+//         sessionStorage.setItem('justLoggedOut', logoutFlag);
+//       }
+      
+//       // Aggressive cookie clearing on client side
+//       document.cookie.split(";").forEach(function(c) {
+//         const cookieName = c.split('=')[0].trim();
+//         document.cookie = cookieName + "=;expires=" + new Date(0).toUTCString() + ";path=/";
+//         document.cookie = cookieName + "=;expires=" + new Date(0).toUTCString() + ";path=/;domain=" + window.location.hostname;
+//       });
+//     }
+
+//     // Call NextAuth signOut
+//     await signOut({ redirect: false });
+    
+//     // Call logout API with improved error handling
+//     try {
+//       const response = await fetch('/api/auth/logout', {
+//         method: 'POST',
+//         credentials: 'include',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//       });
+      
+//       // Check if response is OK and has content
+//       if (response.ok) {
+//         const text = await response.text();
+//         if (text) {
+//           try {
+//             const data = JSON.parse(text);
+//             console.log('Logout API response:', data);
+//           } catch (parseError) {
+//             console.log('Logout API returned non-JSON response:', text);
+//           }
+//         } else {
+//           console.log('Logout API returned empty response but status OK');
+//         }
+//       } else {
+//         console.log('Logout API returned status:', response.status);
+//         // Try to get error message if any
+//         try {
+//           const errorText = await response.text();
+//           if (errorText) {
+//             console.log('Logout API error:', errorText);
+//           }
+//         } catch (e) {
+//           // Ignore if can't read response
+//         }
+//       }
+//     } catch (fetchError) {
+//       console.error('Logout API fetch error:', fetchError);
+//       // Continue with logout even if API fails
+//     }
+    
+//     toast.success('Logged out successfully');
+    
+//     // Force redirect to signin with cache busting
+//     window.location.href = '/user/signin?t=' + Date.now();
+    
+//   } catch (error) {
+//     console.error('Logout error:', error);
+//     toast.error('Failed to logout');
+//     window.location.href = '/user/signin?t=' + Date.now();
+//   } finally {
+//     setIsLoggingOut(false);
+//     setShowLogoutConfirm(false);
+//   }
+// };
   const navLinks = [
     { label: "Dashboard",    icon: <FiHome size={20} />,          href: "/user-dashboard" },
     { label: "My Profile",   icon: <FiUser size={20} />,          href: "/user-dashboard/profile" },
