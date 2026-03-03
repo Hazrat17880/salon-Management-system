@@ -8,7 +8,9 @@ import {
 import { FaCut } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import useLogout from "../hooks/UserLogout";
+import { signOut } from "next-auth/react"; // Add this import
+import { toast } from "react-toastify"; // Add this import
+import { removeAuthToken } from "@/lib/cookiesAction"; // Add this import
 
 // ─── Portal Logout Modal ──────────────────────────────────────────────────────
 function LogoutModal({ onCancel, onConfirm }) {
@@ -86,16 +88,55 @@ function LogoutModal({ onCancel, onConfirm }) {
 export default function UserSidebar({ unreadNotifications, messages, setMobileMenuOpen }) {
   const router = useRouter();
   const pathname = usePathname();
-  const logout = useLogout();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+const confirmLogout = async () => {
+  if (isLoggingOut) return;
+  
+  try {
+    setIsLoggingOut(true);
+    
+    // Clear everything from localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      
+      // Clear cookies
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+      });
+    }
 
-  const confirmLogout = () => {
-    localStorage.removeItem('forgotData')
-    logout();
-    setShowLogoutConfirm(false);a
-    router.push("/user/signin");
-  };
-
+    // Call NextAuth signOut
+    await signOut({ redirect: false });
+    
+    // Call logout API - but don't wait for it
+    fetch('/api/auth/logout', {
+      method: 'POST',
+    }).catch(err => console.log('Background logout error:', err));
+    
+    // Show success message
+    toast.success('Logged out successfully');
+    
+    // Small delay to ensure toast is shown
+    setTimeout(() => {
+      router.push('/user/signin');
+      router.refresh();
+    }, 100);
+    
+  } catch (error) {
+    console.error('Logout error:', error);
+    toast.error('Failed to logout');
+    
+    setTimeout(() => {
+      router.push('/user/signin');
+    }, 100);
+    
+  } finally {
+    setIsLoggingOut(false);
+    setShowLogoutConfirm(false);
+  }
+};
   const navLinks = [
     { label: "Dashboard",    icon: <FiHome size={20} />,          href: "/user-dashboard" },
     { label: "My Profile",   icon: <FiUser size={20} />,          href: "/user-dashboard/profile" },
@@ -105,15 +146,20 @@ export default function UserSidebar({ unreadNotifications, messages, setMobileMe
     { label: "Complaints",   icon: <FiSettings size={20} />,      href: "/user-dashboard/complaints" },
   ];
 
+  // Get unread message count
+  const unreadMessageCount = messages?.filter(m => m.unread).length || 0;
+
   return (
     <>
       {/* Portal modal — injected into document.body, fully outside sidebar DOM */}
-      {showLogoutConfirm && (
-        <LogoutModal
-          onCancel={() => setShowLogoutConfirm(false)}
-          onConfirm={confirmLogout}
-        />
-      )}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <LogoutModal
+            onCancel={() => setShowLogoutConfirm(false)}
+            onConfirm={confirmLogout}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <div className="w-full md:w-64 bg-indigo-800 text-white shadow-lg h-full flex flex-col">
@@ -148,9 +194,9 @@ export default function UserSidebar({ unreadNotifications, messages, setMobileMe
                 <span className={`font-medium text-sm ${isActive ? "text-white" : "text-indigo-100"}`}>
                   {item.label}
                 </span>
-                {item.label === "Messages" && messages?.filter(m => m.unread).length > 0 && (
+                {item.label === "Messages" && unreadMessageCount > 0 && (
                   <span className="ml-auto bg-rose-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                    {messages.filter(m => m.unread).length}
+                    {unreadMessageCount}
                   </span>
                 )}
               </motion.div>
@@ -162,10 +208,15 @@ export default function UserSidebar({ unreadNotifications, messages, setMobileMe
         <div className="p-4 border-t border-indigo-700/50">
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="flex items-center w-full p-3 text-indigo-200 hover:text-white hover:bg-indigo-700 rounded-xl transition-colors group"
+            disabled={isLoggingOut}
+            className={`flex items-center w-full p-3 text-indigo-200 hover:text-white hover:bg-indigo-700 rounded-xl transition-colors group ${
+              isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             <FiLogOut size={18} className="mr-3 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="font-medium text-sm">Sign Out</span>
+            <span className="font-medium text-sm">
+              {isLoggingOut ? 'Signing out...' : 'Sign Out'}
+            </span>
           </button>
         </div>
 

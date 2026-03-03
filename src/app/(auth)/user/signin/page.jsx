@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
@@ -7,11 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAuthToken, setAuthToken } from "@/lib/cookiesAction";
 import { toast } from "react-toastify";
-
-// signin with google coding 
-import { signIn } from "next-auth/react";
-
-
+import { signIn, useSession } from "next-auth/react";
 
 export default function UserLoginPage() {
   const [email, setEmail] = useState("");
@@ -20,19 +17,71 @@ export default function UserLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [isOAuthCallback, setIsOAuthCallback] = useState(false);
+  
   const router = useRouter();
+  const { data: session, status } = useSession();
 
+  // Handle forgot password
   const handleForgotPassword = () => {
     router.push(`/user/forgot?role=user`);
   };
 
+  // Function to set custom token after OAuth login
+  const setCustomToken = async (email) => {
+    try {
+      const response = await fetch('/api/auth/set-custom-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-// google login controller 
-const handleGoogleLogin = () => {
-    signIn("google"); 
+      const data = await response.json();
+      
+      if (data.success) {
+        setAuthToken('user', 'token');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error setting custom token:', error);
+      return false;
+    }
   };
 
+  // Google login handler - FIXED
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      await signIn("google", { 
+        callbackUrl: "/user-dashboard",
+        redirect: true
+      });
+    } catch (error) {
+      console.error("Google sign in error:", error);
+      toast.error("Failed to sign in with Google");
+      setIsLoading(false);
+    }
+  };
+
+  // Facebook login handler - FIXED
+  const handleFacebookLogin = async () => {
+    try {
+      setIsLoading(true);
+      await signIn("facebook", { 
+        callbackUrl: "/user-dashboard",
+        redirect: true
+      });
+    } catch (error) {
+      console.error("Facebook sign in error:", error);
+      toast.error("Failed to sign in with Facebook");
+      setIsLoading(false);
+    }
+  };
+
+  // Email/Password login handler
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -54,21 +103,63 @@ const handleGoogleLogin = () => {
       }
 
       toast.success("You have logged in successfully.");
-      setAuthToken('user', 'token'); // Set user auth token
-      router.push("/user-dashboard"); // Redirect to user dashboard
+      setAuthToken('user', 'token');
+      router.push("/user-dashboard");
       
     } catch (err) {
       setError(err.message);
+      toast.error(err.message);
     } finally {
       setIsLoading(false);
     }
   };
-  useEffect(()=>{
-    let token = getAuthToken('user')
-    if(token){
-      router.replace("/user-dashboard")
-    }
-  },[])
+
+  // Handle OAuth callback - set custom token when session is available
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      if (status === 'loading') return;
+      
+      if (session?.user?.email && !getAuthToken('user')) {
+        setIsOAuthCallback(true);
+        const success = await setCustomToken(session.user.email);
+        if (success) {
+          router.push("/user-dashboard");
+        } else {
+          setIsOAuthCallback(false);
+          toast.error("Failed to complete authentication");
+        }
+      }
+    };
+
+    handleOAuthCallback();
+  }, [session, status, router]);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      let token = getAuthToken('user');
+      if (token) {
+        router.replace("/user-dashboard");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Show loading while checking session or during OAuth callback
+  if (status === "loading" || isOAuthCallback) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">
+            {isOAuthCallback ? "Completing authentication..." : "Loading..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4 relative overflow-hidden pt-24">
       {/* Animated background elements */}
@@ -127,17 +218,13 @@ const handleGoogleLogin = () => {
             <div className="inline-flex bg-gray-100 rounded-lg p-1">
               <button
                 type="button"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  "bg-white shadow-sm text-indigo-600" 
-                }`}
+                className="px-4 py-2 rounded-md text-sm font-medium bg-white shadow-sm text-indigo-600"
               >
                 I'm a User
               </button>
-              <Link href={"/salon/signin"}
-                type="button"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  "text-gray-600 hover:text-gray-800"
-                }`}
+              <Link
+                href="/salon/signin"
+                className="px-4 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 transition"
               >
                 Salon Owner
               </Link>
@@ -202,14 +289,15 @@ const handleGoogleLogin = () => {
                   Remember me
                 </label>
               </div>
-              
             </div>
           </div>
 
           <motion.button
             type="submit"
             whileTap={{ scale: 0.98 }}
-            className={`w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition ${isLoading ? 'opacity-80 cursor-not-allowed' : ''}`}
+            className={`w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition ${
+              isLoading ? 'opacity-80 cursor-not-allowed' : ''
+            }`}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -227,14 +315,12 @@ const handleGoogleLogin = () => {
         </form>
 
         <div className="flex my-2 justify-center">
-
-
           <button 
-                onClick={handleForgotPassword}
-                className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
-              >
-                Forgot password?
-              </button>
+            onClick={handleForgotPassword}
+            className="text-sm text-indigo-600 hover:text-indigo-500 hover:underline"
+          >
+            Forgot password?
+          </button>
         </div>
 
         <div className="my-6 relative">
@@ -246,28 +332,31 @@ const handleGoogleLogin = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 cursor-pointer">
+        <div className="grid grid-cols-2 gap-3">
           <motion.button
             type="button"
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FcGoogle className="text-xl" />
             <span className="text-sm font-medium">Google</span>
           </motion.button>
-        <motion.button
-      type="button"
-      onClick={() => signIn("facebook")}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-    >
-      <FaFacebook className="text-xl text-blue-600" />
-      <span className="text-sm font-medium">Facebook</span>
-    </motion.button>
-        </div> 
+
+          <motion.button
+            type="button"
+            onClick={handleFacebookLogin}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FaFacebook className="text-xl text-blue-600" />
+            <span className="text-sm font-medium">Facebook</span>
+          </motion.button>
+        </div>
 
         <div className="mt-8 text-center text-sm text-gray-500">
           Don't have an account?{' '}

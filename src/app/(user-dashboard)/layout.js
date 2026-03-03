@@ -72,17 +72,16 @@ useEffect(() => {
         `}
       >
         <UserSidebar
-  profileData={profileData}
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-  unreadNotifications={unreadNotifications}
-  messages={messages}
-  setMobileMenuOpen={setMobileMenuOpen}
-/>
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          unreadNotifications={unreadNotifications}
+          messages={messages}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
       </aside>
 
       {/* Right Side */}
-      <div className="flex flex-col flex-1 min-w-0 ">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
         {/* Top Navigation */}
         <header className="flex-shrink-0 z-30">
