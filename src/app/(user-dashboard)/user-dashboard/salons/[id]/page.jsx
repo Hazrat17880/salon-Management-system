@@ -69,6 +69,8 @@ export default function SalonDetails() {
         return;
       }
       const data = await res.json();
+console.log("your salon data are :",data);
+
       if (data.success) {
         setSalon(data.data.salon);
         setServices(data.data.services);
@@ -326,43 +328,154 @@ export default function SalonDetails() {
 
   // handle appointment
   // Update the handler
-  const handleBookAppointment = async () => {
-    if (!appointmentDate || !appointmentTime) {
-      toast.error("Please select both date and time");
+  // const handleBookAppointment = async () => {
+  //   if (!appointmentDate || !appointmentTime) {
+  //     toast.error("Please select both date and time");
+  //     return;
+  //   }
+
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("salon_id", salon.id);
+  //     formData.append("service_id", selectedService.id);
+  //     formData.append("date", appointmentDate);
+  //     formData.append("time", appointmentTime);
+  //     if (appointmentImage) {
+  //       formData.append("image", appointmentImage); // attach image file
+  //     }
+
+  //     const res = await fetch("/api/user/appointments", {
+  //       method: "POST",
+  //       body: formData, // send multipart form data
+  //     });
+
+  //     const data = await res.json();
+  //     if (data.success) {
+  //       toast.success("Appointment booked successfully!");
+  //       setAppointmentModal(false);
+  //       setSelectedService(null);
+  //       setAppointmentDate("");
+  //       setAppointmentTime("");
+  //       setAppointmentImage(null);
+  //     } else {
+  //       toast.error(data.message || "Failed to book appointment");
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to book appointment", error);
+  //     toast.error("Error booking appointment");
+  //   }
+  // };
+
+// Update this function in your SalonDetails component
+// In your SalonDetails component, update the handleBookAppointment function:
+
+const handleBookAppointment = async () => {
+  if (!appointmentDate || !appointmentTime) {
+    toast.error("Please select both date and time");
+    return;
+  }
+
+  console.log("your appointment data are here below");
+  console.log("your appointment date are :", appointmentDate);
+  console.log("your appointment time are :", appointmentTime);
+
+  try {
+    const loadingToast = toast.loading("Creating appointment...");
+
+    // Create appointment
+    const formData = new FormData();
+    formData.append("salon_id", salon.id);
+    formData.append("service_id", selectedService.id);
+    formData.append("date", appointmentDate);
+    formData.append("time", appointmentTime);
+    if (appointmentImage) {
+      formData.append("image", appointmentImage);
+    }
+
+    // Log each form field to verify they have values
+    console.log("Form data contents:");
+    console.log("salon_id:", salon.id);
+    console.log("service_id:", selectedService.id);
+    console.log("date:", appointmentDate);
+    console.log("time:", appointmentTime);
+    console.log("image:", appointmentImage ? "present" : "none");
+
+    console.log("Sending request to /api/user/appointments");
+    
+    const appointmentRes = await fetch("/api/user/appointments", {
+      method: "POST",
+      body: formData,
+    });
+
+    console.log("Response status:", appointmentRes.status);
+    
+    const appointmentData = await appointmentRes.json();
+    console.log("Response data:", appointmentData);
+    
+    // ✅ IMPORTANT: Add this missing logic to handle the response
+    
+    // Handle different HTTP status codes
+    if (!appointmentRes.ok) {
+      toast.dismiss(loadingToast);
+      
+      // Handle 409 Conflict specifically
+      if (appointmentRes.status === 409) {
+        toast.error(appointmentData.message || "This time slot is already booked. Please select another time.");
+        return;
+      }
+      
+      // Handle other errors
+      toast.error(appointmentData.message || "Failed to create appointment");
       return;
     }
 
-    try {
-      const formData = new FormData();
-      formData.append("salon_id", salon.id);
-      formData.append("service_id", selectedService.id);
-      formData.append("date", appointmentDate);
-      formData.append("time", appointmentTime);
-      if (appointmentImage) {
-        formData.append("image", appointmentImage); // attach image file
-      }
-
-      const res = await fetch("/api/user/appointments", {
-        method: "POST",
-        body: formData, // send multipart form data
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Appointment booked successfully!");
-        setAppointmentModal(false);
-        setSelectedService(null);
-        setAppointmentDate("");
-        setAppointmentTime("");
-        setAppointmentImage(null);
-      } else {
-        toast.error(data.message || "Failed to book appointment");
-      }
-    } catch (error) {
-      console.error("Failed to book appointment", error);
-      toast.error("Error booking appointment");
+    // If we get here, appointment was created successfully
+    if (!appointmentData.success) {
+      toast.dismiss(loadingToast);
+      toast.error(appointmentData.message || "Failed to create appointment");
+      return;
     }
-  };
+
+    // Get the appointment ID
+    const newAppointmentId = appointmentData.appointmentId || appointmentData.data?.id;
+    console.log("New appointment ID:", newAppointmentId);
+
+    if (!newAppointmentId) {
+      throw new Error("No appointment ID returned");
+    }
+
+    // Create payment
+   const paymentRes = await fetch("/api/stripe/create-payment", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  credentials: "include", // ⭐ send NextAuth cookies
+  body: JSON.stringify({
+    amount: Math.round(selectedService.price * 100),
+    salonId: salon.id,
+    customerId: currentUserId,
+    serviceId: selectedService.id,
+    appointmentTime: `${appointmentDate} ${appointmentTime}`,
+    appointmentId: newAppointmentId,
+    platformFeePercent: 10
+  }),
+});
+
+    const paymentData = await paymentRes.json();
+    toast.dismiss(loadingToast);
+
+    if (!paymentRes.ok) {
+      throw new Error(paymentData.error || "Payment creation failed");
+    }
+
+    // Redirect to payment page
+    router.push(`/bookings/payment?appointmentId=${newAppointmentId}`);
+
+  } catch (error) {
+    console.error("Failed to book appointment:", error);
+    toast.dismiss();
+    toast.error(error.message || "Error booking appointment");
+  }
+};
 
   if (loading)
     return <div className="p-10 text-center">Loading salon details...</div>;
@@ -520,7 +633,7 @@ export default function SalonDetails() {
                     <div className="relative mb-4">
                       <img
                         src={service.image_url || "/default-service.jpg"}
-                        alt={service.name}
+                        alt={service.Title}
                         className="w-full h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-3 right-3 bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -529,15 +642,29 @@ export default function SalonDetails() {
                     </div>
                     <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
                       <Scissors size={18} className="text-indigo-600" />
-                      {service.name}
+                      {service.Title}
                     </h3>
+                    <div className="flex flex-wrap gap-2 mb-3">
+  <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full">
+    {service.main_category}
+  </span>
+  <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">
+    {service.sub_category}
+  </span>
+</div>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                       {service.description}
                     </p>
+                    <div className="text-xs text-gray-500 space-y-1 mb-3">
+  <div>📅 {service.special_days}</div>
+  <div>
+    🕒 {service.available_start_time.slice(0,5)} - {service.available_end_time.slice(0,5)}
+  </div>
+</div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                        ⏱️ {service.duration || "30 min"}
-                      </span>
+                      <span className="text-xs bg-gray-100 px-3 py-1 rounded-full">
+  ⏱ {service.duration_minutes} mins
+</span>
                       <button
                         className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
                         onClick={(e) => {

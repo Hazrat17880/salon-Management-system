@@ -68,6 +68,10 @@ CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   salon_name VARCHAR(255) NOT NULL,
   owner_name VARCHAR(255) NOT NULL,
+
+ stripe_account_id VARCHAR(255),
+stripe_onboarded BOOLEAN DEFAULT false,
+
   id_card VARCHAR(255),
   license VARCHAR(255),
   email VARCHAR(255) NOT NULL UNIQUE,

@@ -40,7 +40,7 @@ const menuItems = [
  
   // Settings
   { id: "profile", icon: <User size={20} />, label: "Profile", href: "/salon-dashboard/profile" },
-  { id: "settings", icon: <Settings size={20} />, label: "Settings", href: "#" },
+  { id: "Connect Account", icon: <Settings size={20} />, label: "Bank Account", href: "/salon-dashboard/bank-account" },
 ];
 
   function handleTabChange(id, href) {

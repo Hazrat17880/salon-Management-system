@@ -234,22 +234,20 @@ const confirmLogout = async () => {
       </AnimatePresence>
 
       {/* Sidebar */}
-      <div className="w-full md:w-64 bg-indigo-800 text-white shadow-lg h-full flex flex-col">
-
+<div className="w-full md:w-64 bg-indigo-800 text-white shadow-lg h-full flex flex-col overflow-x-hidden">
         {/* Brand */}
         <div className="p-4 md:p-6 border-b border-indigo-700/50">
           <h1 className="text-xl font-bold tracking-tight">User Dashboard</h1>
         </div>
 
         {/* Nav links */}
-        <nav className="mt-2 flex-1 overflow-y-auto">
+        <nav className="mt-2 flex-1 overflow-y-auto overflow-x-hidden">
           {navLinks.map((item, idx) => {
             const isActive = pathname === item.href;
             return (
               <motion.div
                 key={idx}
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.98 }}
+whileHover={{ paddingLeft: 28 }}                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   router.push(item.href);
                   setMobileMenuOpen(false);

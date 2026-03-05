@@ -215,8 +215,8 @@ export const POST = withUserAuth(async (req) => {
       imageUrl = uploadRes.secure_url;
     }
 
-    // ✅ Insert appointment with image URL
-    await query(
+    // ✅ Insert appointment with image URL and GET THE INSERTED ID
+    const result = await query(
       `
       INSERT INTO appointment 
         (salon_id, user_id, services_id, appointment_date, appointment_time, appointment_status, accept, user_view, image)
@@ -226,9 +226,14 @@ export const POST = withUserAuth(async (req) => {
       [salon_id, userId, service_id, date, time, true, imageUrl]
     );
 
+    // Get the inserted appointment ID (depends on your database library)
+    // For MySQL with mysql2, result.insertId gives you the auto-generated ID
+    const appointmentId = result.insertId;
+
     return NextResponse.json({
       success: true,
       message: "Appointment booked successfully!",
+      appointmentId: appointmentId, // ✅ Return the ID
     });
   } catch (error) {
     console.error("Error creating appointment:", error);
