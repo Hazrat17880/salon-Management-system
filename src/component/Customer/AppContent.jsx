@@ -37,10 +37,24 @@ const AppointmentsContent = () => {
     fetchAppointments();
   }, []);
 
+  console.log("your appointment are :", appointments);
+
+  // Fix: Use appointment_status instead of status for filtering
   const filteredAppointments =
     filter === "all"
       ? appointments
-      : appointments.filter((a) => a.appointment_status === filter);
+      : appointments.filter((a) => {
+          if (filter === "confirmed") {
+            return a.appointment_status === "accept" || a.appointment_status === "confirmed";
+          } else if (filter === "pending") {
+            return a.appointment_status === "pending" || a.appointment_status === "";
+          } else if (filter === "completed") {
+            return a.appointment_status === "completed";
+          } else if (filter === "rejected") {
+            return a.appointment_status === "rejected";
+          }
+          return a.appointment_status === filter;
+        });
 
   // Cancel appointment with confirmation
   const confirmCancelAppointment = (id, name) => {
@@ -128,6 +142,15 @@ const AppointmentsContent = () => {
     } catch (error) {
       return "";
     }
+  };
+
+  // Helper function to get display status
+  const getDisplayStatus = (appointment) => {
+    const status = appointment.appointment_status;
+    if (!status || status === "pending") return "pending";
+    if (status === "accept") return "confirmed";
+    if (status === "reject") return "rejected";
+    return status;
   };
 
   return (
@@ -258,6 +281,18 @@ const AppointmentCard = ({
   onCancelEdit,
   formatDateForInput
 }) => {
+  // Fix: Map database status to display status
+  const getDisplayStatus = () => {
+    const status = appointment.appointment_status;
+    if (!status || status === "pending") return "pending";
+    if (status === "accept") return "confirmed";
+    if (status === "reject") return "rejected";
+    if (status === "completed") return "completed";
+    return "pending";
+  };
+
+  const displayStatus = getDisplayStatus();
+
   const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
     confirmed: "bg-green-100 text-green-800",
@@ -271,6 +306,11 @@ const AppointmentCard = ({
     completed: <FiCheck className="mr-1" />,
     rejected: <FiX className="mr-1" />,
   };
+
+  // Fix: Check if actions should be shown based on display status
+  const shouldShowActions = showActions && 
+    displayStatus !== "completed" && 
+    displayStatus !== "rejected";
 
   return (
     <motion.div
@@ -288,18 +328,23 @@ const AppointmentCard = ({
               {appointment.salon_name}
             </h4>
             <span
-              className={`text-xs px-2.5 py-1 rounded-full flex items-center ${statusColors[appointment.status]}`}
+              className={`text-xs px-2.5 py-1 rounded-full flex items-center ${statusColors[displayStatus]}`}
             >
-              {statusIcons[appointment.status]}
-              {appointment.status}
+              {statusIcons[displayStatus]}
+              {displayStatus}
             </span>
           </div>
           <p className="text-sm font-medium text-gray-700 flex items-center">
             <FiDollarSign className="mr-1" />
-            {appointment.service_price}
+            ${appointment.service_price}
           </p>
         </div>
         <p className="text-sm text-gray-600">{appointment.service_name}</p>
+        {appointment.discount > 0 && (
+          <p className="text-xs text-green-600 mt-1">
+            {appointment.discount}% discount applied
+          </p>
+        )}
       </div>
 
       {isEditing ? (
@@ -364,26 +409,27 @@ const AppointmentCard = ({
               <FiClock className="mr-2 text-indigo-600" />
               {appointment.appointment_time || "Time not set"}
             </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Duration: {appointment.duration_minutes} minutes
+            </p>
           </div>
 
-          {showActions &&
-            appointment.status !== "completed" &&
-            appointment.status !== "rejected" && (
-              <div className="flex space-x-3">
-                <button
-                  onClick={onEdit}
-                  className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
-                >
-                  <FiEdit2 className="mr-1" /> Reschedule
-                </button>
-                <button
-                  onClick={onCancel}
-                  className="px-3 py-1.5 text-sm bg-white border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center"
-                >
-                  <FiTrash2 className="mr-1" /> Cancel
-                </button>
-              </div>
-            )}
+          {shouldShowActions && (
+            <div className="flex space-x-3">
+              <button
+                onClick={onEdit}
+                className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
+              >
+                <FiEdit2 className="mr-1" /> Reschedule
+              </button>
+              <button
+                onClick={onCancel}
+                className="px-3 py-1.5 text-sm bg-white border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center"
+              >
+                <FiTrash2 className="mr-1" /> Cancel
+              </button>
+            </div>
+          )}
         </>
       )}
     </motion.div>

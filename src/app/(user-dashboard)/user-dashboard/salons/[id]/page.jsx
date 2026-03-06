@@ -447,7 +447,7 @@ const handleBookAppointment = async () => {
     // Create payment
    const paymentRes = await fetch("/api/stripe/create-payment", {
   method: "POST",
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json" }, 
   credentials: "include", // ⭐ send NextAuth cookies
   body: JSON.stringify({
     amount: Math.round(selectedService.price * 100),
@@ -468,7 +468,7 @@ const handleBookAppointment = async () => {
     }
 
     // Redirect to payment page
-    router.push(`/bookings/payment?appointmentId=${newAppointmentId}`);
+    router.push(`/booking/payment?appointmentId=${newAppointmentId}`);
 
   } catch (error) {
     console.error("Failed to book appointment:", error);

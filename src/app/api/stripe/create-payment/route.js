@@ -1,34 +1,63 @@
-// app/api/bookings/create-payment/route.js (FIXED)
+// app/api/stripe/create-payment/route.js
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { query } from '@/lib/dbConnection';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(request) {
+  console.log("🔵 Create payment API called");
+  
   try {
-const session = await getServerSession(authOptions);
+    // Log all cookies to debug
+    const cookieHeader = request.headers.get('cookie');
+    console.log("📦 Cookies present:", !!cookieHeader);
+    
+    if (cookieHeader) {
+      const hasNextAuthCookie = cookieHeader.includes('next-auth.session-token') || 
+                                cookieHeader.includes('__Secure-next-auth.session-token');
+      console.log("🔑 NextAuth cookie present:", hasNextAuthCookie);
+    }
+
+    const session = await getServerSession(authOptions);
+    console.log("👤 Session found:", !!session);
+    
+    if (session) {
+      console.log("👤 User ID:", session.user?.id);
+      console.log("👤 User role:", session.user?.role);
+    }
+
     if (!session) {
+      console.log("❌ No session found - returning 401");
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - No valid session' },
         { status: 401 }
       );
     }
 
+    const body = await request.json();
+    console.log("📦 Request body:", { 
+      ...body, 
+      amount: body.amount,
+      salonId: body.salonId,
+      serviceId: body.serviceId,
+      appointmentId: body.appointmentId 
+    });
+
     const { 
       amount,
       salonId,
-      customerId,
       serviceId,
       appointmentTime,
       appointmentId,
       platformFeePercent = 10
-    } = await request.json();
+    } = body;
+    
+    const customerId = session.user.id;
 
-    if (!amount || !salonId || !customerId || !serviceId || !appointmentTime || !appointmentId) {
+    if (!amount || !salonId || !serviceId || !appointmentTime || !appointmentId) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -49,6 +78,9 @@ const session = await getServerSession(authOptions);
     }
 
     const salon = salons[0];
+    console.log("💈 Salon found:", salon.salon_name);
+    console.log("💳 Stripe account:", salon.stripe_account_id ? "Present" : "Missing");
+    console.log("✅ Stripe onboarded:", salon.stripe_onboarded);
 
     if (!salon?.stripe_account_id) {
       return NextResponse.json(
@@ -68,6 +100,7 @@ const session = await getServerSession(authOptions);
     const platformFee = Math.round(amount * (platformFeePercent / 100));
 
     // Create Payment Intent
+    console.log("💳 Creating Stripe payment intent...");
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
       currency: 'usd',
@@ -86,10 +119,11 @@ const session = await getServerSession(authOptions);
         enabled: true,
       },
     });
+    console.log("✅ Payment intent created:", paymentIntent.id);
 
-    // FIXED: Use correct table name 'appointments' (check your actual table name)
+    // Update appointment
     await query(
-      `UPDATE appointments 
+      `UPDATE appointment 
        SET payment_intent_id = ?, 
            payment_client_secret = ?,
            amount = ?, 
@@ -98,6 +132,7 @@ const session = await getServerSession(authOptions);
        WHERE id = ?`,
       [paymentIntent.id, paymentIntent.client_secret, amount, platformFee, appointmentId]
     );
+    console.log("✅ Appointment updated with payment info");
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
@@ -107,7 +142,7 @@ const session = await getServerSession(authOptions);
     });
 
   } catch (error) {
-    console.error('Payment creation error:', error);
+    console.error('❌ Payment creation error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to create payment' },
       { status: 500 }

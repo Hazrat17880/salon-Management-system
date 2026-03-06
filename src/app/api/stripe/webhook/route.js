@@ -66,13 +66,13 @@ export async function POST(request) {
       
       // Update appointment status
       if (paymentIntent.metadata?.appointment_id) {
-        await query(
-          `UPDATE appointments 
-           SET payment_status = 'paid', 
-               status = 'confirmed'
-           WHERE payment_intent_id = ?`,
-          [paymentIntent.id]
-        );
+      await query(
+  `UPDATE appointment 
+   SET payment_status = 'paid', 
+       appointment_status = 'confirmed'
+   WHERE payment_intent_id = ?`,
+  [paymentIntent.id]
+);
         console.log(`Appointment ${paymentIntent.metadata.appointment_id} confirmed`);
       }
       break;

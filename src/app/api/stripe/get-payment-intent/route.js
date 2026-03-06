@@ -1,46 +1,68 @@
-// app/api/bookings/get-payment-intent/route.js (UPDATED)
+// app/api/stripe/get-payment-intent/route.js
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/dbConnection';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from "../../auth/[...nextauth]/route"
 
 export async function POST(request) {
+  console.log("get payment intent API called");
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { appointmentId } = await request.json(); // Changed from bookingId
+    const { appointmentId } = await request.json();
+    console.log("Appointment ID:", appointmentId);
 
     if (!appointmentId) {
       return NextResponse.json({ error: 'appointmentId is required' }, { status: 400 });
     }
 
-    // Get appointment with payment details
-    // Make sure to join with services to get service name
-    const appointments = await query(
-      `SELECT a.*, s.Title as service_name 
-       FROM appointments a
-       LEFT JOIN services s ON a.service_id = s.id
-       WHERE a.id = ? AND a.user_id = ?`,
-      [appointmentId, session.user.id]
+    // Get the numeric user ID from database using provider_id (Google ID)
+    const users = await query(
+      `SELECT id FROM users WHERE provider_id = ? OR email = ?`,
+      [session.user.id, session.user.email]
     );
 
+    console.log("Users found:", users);
+
+    if (users.length === 0) {
+      return NextResponse.json({ 
+        error: 'User not found in database',
+        googleId: session.user.id,
+        email: session.user.email
+      }, { status: 404 });
+    }
+
+    const numericUserId = users[0].id;
+    console.log("Numeric User ID:", numericUserId);
+
+    // Get the appointment using the numeric user ID
+    const appointments = await query(
+      `SELECT a.*, s.Title as service_name 
+       FROM appointment a
+       LEFT JOIN salon_services s ON a.services_id = s.id
+       WHERE a.id = ? AND a.user_id = ?`,
+      [appointmentId, numericUserId]
+    );
+
+    console.log("Appointments found:", appointments);
+
     if (appointments.length === 0) {
-      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 });
+      return NextResponse.json({ 
+        error: 'Appointment not found for this user',
+        appointmentId,
+        numericUserId
+      }, { status: 404 });
     }
 
     const appointment = appointments[0];
 
-    // Check if payment_intent_id exists and if it's actually a client_secret
-    // In your create-payment API, you stored payment_intent_id and payment_client_secret
+    // Get client secret
     let clientSecret = appointment.payment_client_secret;
     
-    // If you only stored payment_intent_id, you need to fetch from Stripe
     if (!clientSecret && appointment.payment_intent_id) {
-      // You'd need Stripe to retrieve the client_secret
-      // This requires importing Stripe
       const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
       const paymentIntent = await stripe.paymentIntents.retrieve(appointment.payment_intent_id);
       clientSecret = paymentIntent.client_secret;

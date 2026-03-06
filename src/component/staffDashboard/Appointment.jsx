@@ -38,6 +38,8 @@ export default function Appointments() {
     fetchAppointments();
   }, []);
 
+  console.log("your salon appointments are :", appointments);
+
   // Update appointment status
   const handleAppointmentAction = async (id, status, accept = null) => {
     try {
@@ -66,35 +68,46 @@ export default function Appointments() {
   };
 
   // Reject modal controls
-// Reject modal controls
-const openRejectModal = (appointment) => {
-  setAppointmentToUpdate(appointment);   // set which appointment is being rejected
-  setIsRejectModalOpen(true);            // open modal, don't confirm yet
-};
+  const openRejectModal = (appointment) => {
+    setAppointmentToUpdate(appointment);
+    setIsRejectModalOpen(true);
+  };
 
-const closeRejectModal = () => {
-  setIsRejectModalOpen(false);
-  setAppointmentToUpdate(null);
-  setRejectReason("");
-};
+  const closeRejectModal = () => {
+    setIsRejectModalOpen(false);
+    setAppointmentToUpdate(null);
+    setRejectReason("");
+  };
 
-const confirmReject = () => {
-  if (!appointmentToUpdate) return;  // safety check in case it's null
+  const confirmReject = () => {
+    if (!appointmentToUpdate) return;
+    handleAppointmentAction(appointmentToUpdate.id, "reject", 0);
+    closeRejectModal();
+  };
 
-  // sending status = reject, accept = false
-  handleAppointmentAction(appointmentToUpdate.id, "reject", false);
-  closeRejectModal();
-};
+  // Helper function to get display status
+  const getDisplayStatus = (appointment) => {
+    // If appointment_status exists and is not empty, use it
+    if (appointment.appointment_status && appointment.appointment_status !== "") {
+      return appointment.appointment_status;
+    }
+    // If appointment_status is empty but accept field indicates status
+    if (appointment.accept === 1) {
+      return "accept";
+    }
+    // Default to pending
+    return "pending";
+  };
 
-
-  // Filtering
-  const filteredAppointments =
-    filter === "all"
-      ? appointments
-      : appointments.filter((app) => app.status === filter);
+  // Filtering based on appointment_status
+  const filteredAppointments = appointments.filter((app) => {
+    const displayStatus = getDisplayStatus(app);
+    return filter === "all" ? true : displayStatus === filter;
+  });
 
   // Status badge styling
-  const getStatusBadgeClass = (status) => {
+  const getStatusBadgeClass = (appointment) => {
+    const status = getDisplayStatus(appointment);
     switch (status) {
       case "completed":
         return "bg-green-100 text-green-800";
@@ -107,6 +120,18 @@ const confirmReject = () => {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  // Format status for display
+  const formatStatus = (appointment) => {
+    const status = getDisplayStatus(appointment);
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  // Check if actions should be shown based on status
+  const shouldShowActions = (appointment) => {
+    const status = getDisplayStatus(appointment);
+    return status === "pending" || status === "accept";
   };
 
   return (
@@ -163,7 +188,7 @@ const confirmReject = () => {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -173,43 +198,88 @@ const confirmReject = () => {
                     <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <img
-                            src={appointment.image || "/default-avatar.png"}
-                            alt={appointment.user_name}
-                            className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm"
-                          />
+                        <div className="h-10 w-10 rounded-full border-2 border-white shadow-sm flex items-center justify-center bg-indigo-200 text-white font-bold text-sm overflow-hidden">
+  {appointment.image ? (
+    <img
+      src={appointment.image}
+      alt={appointment.user_name || appointment.user_email}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    // fallback: first letter of name or email
+    (appointment.user_name?.[0] || appointment.user_email?.[0] || "?").toUpperCase()
+  )}
+</div>
                           <div className="ml-3">
                             <div className="text-sm font-medium text-gray-900">{appointment.user_name}</div>
                             <div className="text-xs text-gray-500">{appointment.user_email}</div>
+                            {appointment.user_phone && (
+                              <div className="text-xs text-gray-500">{appointment.user_phone}</div>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{appointment.service_name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(appointment.appointment_date).toLocaleDateString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(appointment.status)}`}>
-                          {appointment.appointment_status.charAt(0).toUpperCase() + appointment.appointment_status.slice(1)}
+                        <div className="text-sm text-gray-700">{appointment.service_name}</div>
+                        <div className="text-xs text-gray-500">
+                          ${appointment.service_price} 
+                          {appointment.discount > 0 && ` (${appointment.discount}% off)`}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-700">
+                          {new Date(appointment.appointment_date).toLocaleDateString()}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {appointment.appointment_time} • {appointment.duration_minutes} min
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(appointment)}`}>
+                          {formatStatus(appointment)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap flex gap-2">
-                        <button
-                          className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-md text-sm flex items-center gap-1"
-                          onClick={() => handleAppointmentAction(appointment.id, "accept", true)}
-                        >
-                          <Check size={16} /> Accept
-                        </button>
-                        <button
-                          className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-md text-sm flex items-center gap-1"
-                          onClick={() => handleAppointmentAction(appointment.id, "completed", true)}
-                        >
-                          <Check size={16} /> Complete
-                        </button>
-                        <button
-                          className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-md text-sm flex items-center gap-1"
-                          onClick={() => openRejectModal(appointment)}
-                        >
-                          <Trash2 size={16} /> Reject
-                        </button>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex gap-2">
+                          {shouldShowActions(appointment) && (
+                            <>
+                              {getDisplayStatus(appointment) === "pending" && (
+                                <button
+                                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                                  onClick={() => handleAppointmentAction(appointment.id, "accept", 1)}
+                                >
+                                  <Check size={16} /> Accept
+                                </button>
+                              )}
+                              
+                              {getDisplayStatus(appointment) === "accept" && (
+                                <button
+                                  className="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                                  onClick={() => handleAppointmentAction(appointment.id, "completed", 1)}
+                                >
+                                  <Check size={16} /> Complete
+                                </button>
+                              )}
+                              
+                              {getDisplayStatus(appointment) !== "completed" && 
+                               getDisplayStatus(appointment) !== "reject" && (
+                                <button
+                                  className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-md text-sm flex items-center gap-1 transition-colors"
+                                  onClick={() => openRejectModal(appointment)}
+                                >
+                                  <Trash2 size={16} /> Reject
+                                </button>
+                              )}
+                            </>
+                          )}
+                          
+                          {getDisplayStatus(appointment) === "completed" && (
+                            <span className="text-xs text-gray-500 italic">Completed</span>
+                          )}
+                          {getDisplayStatus(appointment) === "reject" && (
+                            <span className="text-xs text-gray-500 italic">Rejected</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -220,7 +290,7 @@ const confirmReject = () => {
         </div>
       </div>
 
-      {/* Reject Modal
+      {/* Reject Modal */}
       {isRejectModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
@@ -231,31 +301,25 @@ const confirmReject = () => {
               </button>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              Provide a reason for rejecting this appointment.
+              Are you sure you want to reject this appointment?
             </p>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter reason..."
-            />
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={closeRejectModal}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReject}
-                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700"
+                className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
               >
-                Reject
+                Reject Appointment
               </button>
             </div>
           </div>
         </div>
-      )} */}
+      )}
     </div>
   );
 }

@@ -22,7 +22,7 @@ export default function PaymentPage() {
     // Get payment intent for this appointment
     const fetchPaymentIntent = async () => {
       try {
-        const res = await fetch('/api/bookings/get-payment-intent', {
+        const res = await fetch('/api/stripe/get-payment-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ appointmentId })
@@ -104,7 +104,7 @@ function PaymentForm({ appointmentId }) {
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/bookings/confirmation?appointmentId=${appointmentId}`,
+        return_url: `${window.location.origin}/booking/confirmation?appointmentId=${appointmentId}`,
       },
       redirect: 'if_required',
     });
@@ -124,7 +124,7 @@ function PaymentForm({ appointmentId }) {
       });
 
       toast.success('Payment successful!');
-      router.push(`/bookings/confirmation?appointmentId=${appointmentId}`);
+      router.push(`/booking/confirmation?appointmentId=${appointmentId}`);
     }
   };
 

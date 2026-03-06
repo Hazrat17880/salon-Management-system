@@ -87,7 +87,7 @@ export default function ConfirmationPage() {
 
         <div className="flex gap-4 justify-center">
           <Link
-            href="/user/dashboard"
+            href="/user-dashboard"
             className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition"
           >
             Go to Dashboard
