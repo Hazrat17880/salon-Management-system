@@ -3,25 +3,67 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/dbConnection';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 
 export async function GET(request) {
   try {
+    let userId = null;
+    
+    // METHOD 1: Check for NextAuth session (Google/Facebook login)
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    if (session) {
+      // Get the numeric user ID from database using email
+      const users = await query(
+        `SELECT id FROM users WHERE email = ?`,
+        [session.user.email]
+      );
+      
+      if (users.length === 0) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+      
+      userId = users[0].id;
+    } else {
+      // METHOD 2: Check for JWT token in cookies (Regular email/password login)
+      const cookieStore = cookies();
+      const token = cookieStore.get('usertoken')?.value;
+      
+      if (!token) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Unauthorized - No authentication found' 
+        }, { status: 401 });
+      }
+      
+      try {
+        // Verify the JWT token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        if (!decoded || !decoded.id) {
+          return NextResponse.json({ 
+            success: false, 
+            error: 'Unauthorized - Invalid token' 
+          }, { status: 401 });
+        }
+        
+        userId = decoded.id;
+      } catch (jwtError) {
+        console.error('JWT verification failed:', jwtError);
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Unauthorized - Token expired or invalid' 
+        }, { status: 401 });
+      }
     }
 
-    // Get the numeric user ID from database using email
-    const users = await query(
-      `SELECT id FROM users WHERE email = ?`,
-      [session.user.email]
-    );
-
-    if (users.length === 0) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!userId) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Unauthorized - Could not identify user' 
+      }, { status: 401 });
     }
-
-    const userId = users[0].id;
 
     // Fetch all appointments for this user with related data
     const appointments = await query(
@@ -58,7 +100,7 @@ export async function GET(request) {
       [userId]
     );
 
-    // FIXED: Get unread messages count by joining with conversations table
+    // Get unread messages count
     let messagesCount = 0;
     let allMessages = [];
     
@@ -73,9 +115,9 @@ export async function GET(request) {
       );
       messagesCount = unreadResult?.unread_count || 0;
 
-      // Get all messages for this user (optional - if you want to display them)
+      // Get all messages for this user
       allMessages = await query(
-        `SELECT 
+        `SELECT  
             m.id,
             m.message,
             m.is_read,
@@ -102,12 +144,12 @@ export async function GET(request) {
       success: true,
       data: {
         appointments: appointments,
-        messages: allMessages, // Include all messages if needed
+        messages: allMessages,
         stats: {
           upcoming: stats.upcoming_count || 0,
           completed: stats.completed_count || 0,
           salons: stats.unique_salons || 0,
-          messages: messagesCount, // This is the unread count
+          messages: messagesCount,
           totalSpent: stats.total_spent || 0,
           totalAppointments: stats.total_appointments || 0
         }

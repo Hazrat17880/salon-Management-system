@@ -100,7 +100,7 @@ const Page = () => {
   // Function to check Stripe onboarding status
   const checkStripeStatus = async () => {
     try {
-      const res = await fetch('/api/stripe/account-status', {
+      const res = await fetch('/api/stripe/salons/account-status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -106,7 +106,7 @@ useEffect(() => {
       
       // cehcking for type and redirect according to that 
       purpose==="forgot" ? router.push(`/user/reset-password`) :
-      router.push("/user-dashboard");
+      router.push("/user/signin");
 
     } catch (err) {
       toast.error(err.message || "An error occurred during verification");

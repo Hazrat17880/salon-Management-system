@@ -154,6 +154,8 @@ CREATE TABLE IF NOT EXISTS admin_auth (
   )
 `);
 
+
+ // staff 
     await query(`
   CREATE TABLE IF NOT EXISTS staff (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -226,6 +228,9 @@ CREATE TABLE IF NOT EXISTS appointment (
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 );`);
 
+
+// complaints 
+
     await query(`
 CREATE TABLE IF NOT EXISTS complaints (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -242,7 +247,7 @@ CREATE TABLE IF NOT EXISTS complaints (
   INDEX (user_id),
   INDEX (is_read)
 );
-`);
+`); 
 
     // ________________________________ FOR SLIDER _____________________________________
     await query(`

@@ -78,7 +78,7 @@ const SalonComplaints = () => {
 
   const markAsRead = async (complaintId) => {
     try {
-      const response = await fetch(`/api/salon/complaints/${complaintId}`, {
+      const response = await fetch(`/api/salons/complaints/${complaintId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
