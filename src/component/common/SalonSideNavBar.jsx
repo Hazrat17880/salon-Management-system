@@ -122,7 +122,7 @@ export default function SalonsSideBar({profileData}) {
           </button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 ">
           {menuItems.map(({ id, icon, label, href }) => (
             <button
               key={id}
@@ -140,7 +140,7 @@ export default function SalonsSideBar({profileData}) {
           ))}
         </nav>
 
-        <div className="mt-auto p-3 mb-2 ml-3 border-t border-gray-200/70 flex items-center justify-between">
+        <div className=" p-3 mb-2 ml-3 border-t border-gray-200/70 flex items-center justify-between">
           <button
             onClick={() => setShowLogoutModal(true)} // ← FIXED: Open modal instead of direct logout
             className="flex items-center text-red-600 cursor-pointer hover:text-red-700 font-semibold"

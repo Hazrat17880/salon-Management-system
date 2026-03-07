@@ -63,14 +63,15 @@ CREATE TABLE IF NOT EXISTS users (
     `);
 
     // slon table
-    await query(`
-    CREATE TABLE IF NOT EXISTS salons (
+  await query(`
+CREATE TABLE IF NOT EXISTS salons (
   id INT AUTO_INCREMENT PRIMARY KEY,
   salon_name VARCHAR(255) NOT NULL,
   owner_name VARCHAR(255) NOT NULL,
 
- stripe_account_id VARCHAR(255),
-stripe_onboarded BOOLEAN DEFAULT false,
+  stripe_account_id VARCHAR(255),
+  stripe_onboarded BOOLEAN DEFAULT false,
+  stripe_account_status VARCHAR(50) DEFAULT 'pending',
 
   id_card VARCHAR(255),
   license VARCHAR(255),
@@ -82,7 +83,7 @@ stripe_onboarded BOOLEAN DEFAULT false,
   state VARCHAR(100),
   country VARCHAR(100),
   postal_code VARCHAR(100),
- days VARCHAR(255),
+  days VARCHAR(255),
   opening_hours VARCHAR(255),
   otp_code VARCHAR(10),
   otp_expires_at DATETIME,
@@ -93,7 +94,6 @@ stripe_onboarded BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
 `);
 
     //  admin auth

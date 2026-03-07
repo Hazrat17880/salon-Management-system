@@ -65,7 +65,8 @@ export async function GET(request) {
         (SELECT COUNT(*) FROM favorite_salon WHERE salon_id = s.id) as total_favorites
       FROM salons s
       WHERE s.active = TRUE
-      AND s.is_verified = TRUE
+      AND s.is_verified = TRUE 
+      AND s.stripe_account_status = 'active'
       ORDER BY avg_rating DESC, total_favorites DESC
       LIMIT ?
     `, [parseInt(salonsLimit)]);
