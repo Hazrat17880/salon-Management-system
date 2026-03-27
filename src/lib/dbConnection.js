@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS users (
     `);
 
     // slon table
-  await query(`
+    await query(`
 CREATE TABLE IF NOT EXISTS salons (
   id INT AUTO_INCREMENT PRIMARY KEY,
   salon_name VARCHAR(255) NOT NULL,
@@ -154,8 +154,7 @@ CREATE TABLE IF NOT EXISTS admin_auth (
   )
 `);
 
-
- // staff 
+    // staff
     await query(`
   CREATE TABLE IF NOT EXISTS staff (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -171,7 +170,7 @@ CREATE TABLE IF NOT EXISTS admin_auth (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (salon_id) REFERENCES salons(id) ON DELETE CASCADE
   )
-`);
+`); 
 
     // for favorite salon
     await query(`
@@ -228,8 +227,7 @@ CREATE TABLE IF NOT EXISTS appointment (
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
 );`);
 
-
-// complaints 
+    // complaints
 
     await query(`
 CREATE TABLE IF NOT EXISTS complaints (
@@ -247,7 +245,7 @@ CREATE TABLE IF NOT EXISTS complaints (
   INDEX (user_id),
   INDEX (is_read)
 );
-`); 
+`);
 
     // ________________________________ FOR SLIDER _____________________________________
     await query(`
