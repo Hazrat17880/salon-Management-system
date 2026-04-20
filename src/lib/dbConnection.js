@@ -35,32 +35,24 @@ CREATE TABLE IF NOT EXISTS users (
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
   image VARCHAR(255),
-
   password_hash VARCHAR(255) NULL,
-
-  
   provider ENUM('credentials', 'google', 'facebook') 
     DEFAULT 'credentials',
   provider_id VARCHAR(255) NULL,
-
   phone_number VARCHAR(20),
   date_of_birth DATE,
   gender ENUM('male', 'female', 'other'),
   address VARCHAR(255),
-
-
   otp_code VARCHAR(10),
   otp_expires_at DATETIME,
-
   is_verified BOOLEAN DEFAULT FALSE,
   active BOOLEAN DEFAULT TRUE,
-
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
     ON UPDATE CURRENT_TIMESTAMP
 );
 
-    `);
+`);
 
     // slon table
     await query(`
