@@ -637,7 +637,7 @@ const handleBookAppointment = async () => {
                         className="w-full h-48 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-3 right-3 bg-indigo-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                        ${service.price}
+                        {service.price}RM
                       </div>
                     </div>
                     <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
@@ -1057,7 +1057,7 @@ const handleBookAppointment = async () => {
             />
             <h3 className="text-2xl font-bold mb-2">{selectedService.name}</h3>
             <p className="text-gray-600 mb-2">{selectedService.description}</p>
-            <p className="font-medium mb-1">Price: ${selectedService.price}</p>
+            <p className="font-medium mb-1">Price: {selectedService.price} RM</p>
             <p className="font-medium mb-4">
               Duration: {selectedService.duration || "30 min"}
             </p>
@@ -1093,7 +1093,7 @@ const handleBookAppointment = async () => {
                   Service: {selectedService.name}
                 </h4>
                 <p className="text-indigo-600">
-                  Price: ${selectedService.price}
+                  Price: {selectedService.price}RM
                 </p>
                 <p className="text-indigo-600">
                   Duration: {selectedService.duration || "30 min"}

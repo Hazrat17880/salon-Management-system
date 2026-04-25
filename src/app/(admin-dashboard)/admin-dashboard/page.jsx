@@ -177,7 +177,7 @@ const DashboardPage = () => {
   const lineChartData = {
     labels: revenueData.map(r => r.month),
     datasets: [{
-      label: 'Revenue ($)',
+      label: 'Revenue (RM)',
       data: revenueData.map(r => r.revenue),
       borderColor: '#6366F1',
       backgroundColor: 'rgba(99,102,241,0.08)',
@@ -267,7 +267,7 @@ const DashboardPage = () => {
           />
           <StatCard
             icon={FiDollarSign} title="Revenue This Month"
-            value={`$${(stats.revenue ?? 0).toLocaleString()}`}
+            value={`${(stats.revenue ?? 0).toLocaleString()}RM`}
             trend="+15%" trendUp
             accentClass="d-accent-pink"
           />

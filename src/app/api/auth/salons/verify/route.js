@@ -8,12 +8,10 @@ export async function POST(request) {
     // Parse body once
     const body = await request.json();
     const otp = body.otp;
-    // const email = body.email;
+    const email = body.email; // CHANGE THIS - Get email from body instead of cookie
 
-    const cookieStore = await cookies();
-const email = cookieStore.get('salon_email')?.value;
     console.log("OTP from request:", otp);
-    console.log("Email from cookie:", email);
+    console.log("Email from request body:", email);
 
     if (!email || !otp) {
       return new Response(JSON.stringify({ 
@@ -71,7 +69,9 @@ const email = cookieStore.get('salon_email')?.value;
     );
 
     // Set auth cookie
-cookieStore.set('salonstoken', token, {      httpOnly: true,
+    const cookieStore = await cookies();
+    cookieStore.set('salonstoken', token, {
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7, // 7 days

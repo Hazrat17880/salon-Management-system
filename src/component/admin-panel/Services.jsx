@@ -282,7 +282,7 @@ const ServiceManagement = () => {
         <StatCard title="Total Services" value={stats.total} icon={FiGrid} color="indigo" />
         <StatCard title="Active Services" value={stats.active} icon={FiCheck} color="green" />
         <StatCard title="Total Salons" value={stats.totalSalons} icon={FiTag} color="blue" />
-        <StatCard title="Avg. Price" value={`$${stats.avgPrice}`} icon={FiDollarSign} color="purple" />
+        <StatCard title="Avg. Price" value={`${stats.avgPrice}RM`} icon={FiDollarSign} color="purple" />
       </div>
 
       {/* Service Categories */}
@@ -385,7 +385,7 @@ const ServiceManagement = () => {
                       </span>
                       <span className="flex items-center gap-1">
                         <FiDollarSign size={12} />
-                        ${service.price}
+                        {service.price}RM
                       </span>
                       <span className="flex items-center gap-1">
                         <FiTag size={12} />
@@ -497,7 +497,7 @@ const ServiceManagement = () => {
               />
               
               <InputField 
-                label="Price ($)"
+                label="Price (RM)"
                 type="number"
                 value={newService.price}
                 onChange={(e) => setNewService({...newService, price: e.target.value})}
@@ -571,7 +571,7 @@ const ServiceManagement = () => {
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-xs text-gray-500 uppercase font-medium">Price</p>
-                  <p className="font-semibold text-gray-800 mt-1">${currentService.price}</p>
+                  <p className="font-semibold text-gray-800 mt-1">{currentService.price}RM</p>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="text-xs text-gray-500 uppercase font-medium">Status</p>
@@ -653,7 +653,7 @@ const ServiceManagement = () => {
               />
               
               <InputField 
-                label="Price ($)"
+                label="Price (RM)"
                 type="number"
                 value={currentService.price}
                 onChange={(e) => setCurrentService({...currentService, price: e.target.value})}
@@ -726,7 +726,7 @@ const ServiceManagement = () => {
               <div className="bg-gray-50 p-3 rounded-lg mb-4">
                 <p className="font-medium text-gray-800">{currentService.name}</p>
                 <p className="text-sm text-gray-500 mt-1">{currentService.category}</p>
-                <p className="text-sm text-gray-500">${currentService.price} • {currentService.duration}</p>
+                <p className="text-sm text-gray-500">{currentService.price}RM • {currentService.duration}</p>
               </div>
               
               {currentService.salons > 0 && (

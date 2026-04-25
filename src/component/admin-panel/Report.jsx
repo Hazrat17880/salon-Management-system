@@ -50,7 +50,7 @@ const Report = () => {
                 </div>
                 <div className="flex items-center space-x-4">
                   {report.total && (
-                    <p className="font-medium">${report.total}</p>
+                    <p className="font-medium">{report.total}RM</p>
                   )}
                   <button className="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
                     Download

@@ -180,7 +180,7 @@ const AppointmentsPage = () => {
                         </span>
                         <span>⏰ {apt.appointment_time.substring(0, 5)}</span>
                         {apt.amount && (
-                          <span>💰 ${(apt.amount / 100).toFixed(2)}</span>
+                          <span>💰 {(apt.amount / 100).toFixed(2)}RM</span>
                         )}
                       </div>
                       {apt.user_phone && (

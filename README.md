@@ -237,3 +237,8 @@ CREATE TABLE IF NOT EXISTS notifications (
 
     
 );
+
+
+# to add the admin new password or email 
+you need to add your new email and password in the .env file and then you should want to run this api in the browser you new admin will be added successfully
+http://localhost:3000/api/admin/data-saving

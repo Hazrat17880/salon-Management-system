@@ -63,12 +63,12 @@ const STATUS = {
    Sample data
 ───────────────────────────────────────── */
 const sampleAppointments = [
-  { id:1, salon:'Luxury Hair Studio',    service:'Premium Haircut & Styling',    status:'confirmed', date:'2023-06-15', time:'10:30 AM', price:'$65' },
-  { id:2, salon:'Beauty Nails Spa',      service:'Deluxe Manicure & Pedicure',   status:'pending',   date:'2023-06-16', time:'2:00 PM',  price:'$45' },
-  { id:3, salon:'Royal Massage Center',  service:'60min Deep Tissue Massage',    status:'completed', date:'2023-06-10', time:'4:30 PM',  price:'$85' },
-  { id:4, salon:'Elite Barber Shop',     service:'Beard Trim & Shave',           status:'rejected',  date:'2023-06-18', time:'11:00 AM', price:'$30' },
-  { id:5, salon:'Glamour Beauty Lounge', service:'Full Face Makeup',             status:'confirmed', date:'2023-06-20', time:'3:45 PM',  price:'$55' },
-  { id:6, salon:'Organic Skin Care',     service:'Facial Treatment',             status:'pending',   date:'2023-06-22', time:'9:15 AM',  price:'$75' },
+  { id:1, salon:'Luxury Hair Studio',    service:'Premium Haircut & Styling',    status:'confirmed', date:'2023-06-15', time:'10:30 AM', price:'65RM' },
+  { id:2, salon:'Beauty Nails Spa',      service:'Deluxe Manicure & Pedicure',   status:'pending',   date:'2023-06-16', time:'2:00 PM',  price:'45RM' },
+  { id:3, salon:'Royal Massage Center',  service:'60min Deep Tissue Massage',    status:'completed', date:'2023-06-10', time:'4:30 PM',  price:'85RM' },
+  { id:4, salon:'Elite Barber Shop',     service:'Beard Trim & Shave',           status:'rejected',  date:'2023-06-18', time:'11:00 AM', price:'30RM' },
+  { id:5, salon:'Glamour Beauty Lounge', service:'Full Face Makeup',             status:'confirmed', date:'2023-06-20', time:'3:45 PM',  price:'55RM' },
+  { id:6, salon:'Organic Skin Care',     service:'Facial Treatment',             status:'pending',   date:'2023-06-22', time:'9:15 AM',  price:'75RM' },
 ];
 
 /* ─────────────────────────────────────────

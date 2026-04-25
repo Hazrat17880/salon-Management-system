@@ -336,7 +336,7 @@ const AppointmentCard = ({
           </div>
           <p className="text-sm font-medium text-gray-700 flex items-center">
             <FiDollarSign className="mr-1" />
-            ${appointment.service_price}
+            {appointment.service_price}RM
           </p>
         </div>
         <p className="text-sm text-gray-600">{appointment.service_name}</p>

@@ -110,7 +110,7 @@ const Overview = ({ profileData, appointments, notifications, services, dashboar
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total Revenue</p>
-              <h3 className="text-2xl font-bold">${totalRevenue.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold">{totalRevenue.toLocaleString()}RM</h3>
             </div>
             <div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
               <FiDollarSign size={20} />
@@ -131,7 +131,7 @@ const Overview = ({ profileData, appointments, notifications, services, dashboar
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value) => [`$${value}`, 'Revenue']}
+                  formatter={(value) => [`${value}RM`, 'Revenue']}
                 />
                 <Legend />
                 <Line 
@@ -187,7 +187,7 @@ const Overview = ({ profileData, appointments, notifications, services, dashboar
                 </Pie>
                 <Tooltip 
                   formatter={(value, name, props) => [
-                    `${props.payload.revenue ? `$${props.payload.revenue}` : value}`, 
+                    `${props.payload.revenue ? `${props.payload.revenue}RM` : value}`, 
                     props.payload.revenue ? 'Revenue' : 'Completed'
                   ]}
                 />
@@ -271,7 +271,7 @@ const Overview = ({ profileData, appointments, notifications, services, dashboar
                   </span>
                 </div>
                 <p className="mt-2 text-sm">Date: {appointment.date}</p>
-                <p className="text-sm">Price: ${appointment.price}</p>
+                <p className="text-sm">Price: {appointment.price}RM</p>
               </div>
             ))}
           </div>
