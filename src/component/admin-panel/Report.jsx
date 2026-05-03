@@ -104,7 +104,7 @@ const Report = () => {
                   </span>
                   <span>{salon.name}</span>
                 </div>
-                <span className="font-medium">${(Math.random() * 5000 + 1000).toFixed(0)}</span>
+                <span className="font-medium">RM{(Math.random() * 5000 + 1000).toFixed(0)}</span>
               </div>
             ))}
           </div>
